@@ -264,9 +264,11 @@
       e.preventDefault();
       send({ type: 'settings' }).finally(close);
     } else if (e.key === 'ArrowRight' && input.value !== typed && input.selectionEnd === input.value.length) {
-      // Right arrow accepts the inline completion.
+      // Right arrow accepts the inline completion. For an autofilled page, that means its address.
       e.preventDefault();
-      typed = input.value;
+      const page = items[0]?.complete && items[0].kind !== 'url' ? items[0] : null;
+      typed = page ? page.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : input.value;
+      input.value = typed;
       input.setSelectionRange(typed.length, typed.length);
       clearTimeout(timer);
       query();

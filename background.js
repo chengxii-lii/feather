@@ -197,6 +197,32 @@ function score(terms, title = '', url = '') {
   return s;
 }
 
+// True when every typed word starts a word in the title or a part of the address,
+// e.g. "feath" in "GitHub - chengxii-lii/feather", but not "eather".
+function startsWords(terms, title = '', url = '') {
+  const t = title.toLowerCase();
+  const u = cleanUrl(url);
+  const atStart = (text, term, before) => {
+    for (let i = text.indexOf(term); i >= 0; i = text.indexOf(term, i + 1)) {
+      if (i === 0 || before.test(text[i - 1])) return true;
+    }
+    return false;
+  };
+  return terms.every((term) => atStart(t, term, /[\s\W]/) || atStart(u, term, /[./\-_?=&#]/));
+}
+
+// Page autofill: an open tab, bookmark or page you've been to more than once that you're clearly typing.
+// If its title starts with what you typed, the rest of the title fills in; otherwise the page is shown
+// after a dash.
+function pageCompletion(q, terms, local) {
+  if (q.length < 2) return null;
+  const page = local.find((it) => (it.kind !== 'history' || it.visits >= 2) && startsWords(terms, it.title, it.url));
+  if (!page) return null;
+  const title = page.title || cleanUrl(page.url);
+  const complete = title.toLowerCase().startsWith(q.toLowerCase()) ? title : `${q} — ${title}`;
+  return { ...page, complete };
+}
+
 async function search(raw, ctx) {
   const q = raw.trim();
   const s = await FEATHER.load();
@@ -233,15 +259,20 @@ async function search(raw, ctx) {
   };
   tabs.forEach((t) => add({ kind: 'tab', id: t.id, windowId: t.windowId, title: t.title, url: t.url }, 6));
   bookmarks.filter((b) => b.url).forEach((b) => add({ kind: 'bookmark', title: b.title, url: b.url }, 3));
-  history.forEach((h) => add({ kind: 'history', title: h.title || h.url, url: h.url }, Math.min(4, Math.log2((h.visitCount || 1) + 1))));
+  history.forEach((h) => add({ kind: 'history', title: h.title || h.url, url: h.url, visits: h.visitCount || 1 }, Math.min(4, Math.log2((h.visitCount || 1) + 1))));
   local.sort((a, b) => b.score - a.score);
 
-  const action = parseBang(q, s.bangs) || (looksLikeUrl(q)
+  const bang = parseBang(q, s.bangs);
+  const action = bang || (looksLikeUrl(q)
     ? { kind: 'url', title: q, url: normalizeUrl(q) }
     : { kind: 'search', title: q });
 
   // The inline completion is what Enter opens, so it leads; searching for exactly what you typed comes next.
   if (completion) return [completion, action, ...local.slice(0, 8)];
+
+  // No address to fill in: fill in a page you've been to instead, if you're clearly typing it.
+  const page = s.autocomplete && !bang && !looksLikeUrl(q) && pageCompletion(q, terms, local);
+  if (page) return [page, action, ...local.filter((it) => it.url !== page.url).slice(0, 8)];
 
   // A strong local match (e.g. tab title starts with the query) goes above the web action.
   const results = local.slice(0, 9);

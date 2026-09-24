@@ -28,13 +28,14 @@ Quality-of-life upgrades for [Helium](https://helium.computer), borrowing the be
 | --- | --- |
 | Enter | Switch to the tab, or open the result in a new tab |
 | Alt/Option+Enter | Open in the current tab |
-| Right arrow | Accept the autocompleted address |
+| Right arrow | Accept the autofill (for a page, this puts in its address) |
 | Tab/Shift+Tab, Up/Down or Ctrl+N/P | Move through the results |
 | Ctrl+, | Open settings |
-| Esc | Drop the autocompleted address, or close |
+| Esc | Drop the autofill, or close |
 
 - **Autocomplete:** type the start of a site you've visited and feather fills in the rest (`you` → `youtube.com`), like the address bar.
-- **Suggestions:** search suggestions appear as you type.
+- **Page autofill:** type words from a page you keep coming back to (open tabs, bookmarks, or pages you've visited more than once) and feather fills it in, so Enter goes straight there: `Helium b` → `Helium browser`, or `feath` → `feath — GitHub - chengxii-lii/feather`. Each word you type has to start a word in the page's title or address.
+- **Suggestions:** your own pages come first, and web search suggestions appear at the bottom of the list.
 - **!bangs:** `!yt lofi`, `lofi !yt`, `!gh feather` and so on. Popular bangs go straight to the site, and any other bang goes through DuckDuckGo, which knows all 13,000+ of them. Plain searches use your default search engine.
 
 **Privacy:** to show suggestions, feather sends what you type in the bar to DuckDuckGo's autocomplete service. You can turn this off in settings. Your tabs, bookmarks and history never leave your computer.
