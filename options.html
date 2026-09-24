@@ -39,7 +39,7 @@
 
   /* Preview: a sample page with the real bar floating over it */
   .stage {
-    position: relative; height: 330px; border-radius: 18px; overflow: hidden; margin-bottom: 40px;
+    position: relative; height: 360px; border-radius: 18px; overflow: hidden; margin-bottom: 40px;
     display: grid; place-items: center; box-shadow: var(--ring);
   }
   .scene { position: absolute; inset: 0; background: linear-gradient(120deg, #ff8a5c, #ffc15e 32%, #56c1f0 64%, #8c63d9); }
@@ -49,29 +49,28 @@
   .scene .copy i { display: block; height: 9px; margin-bottom: 9px; border-radius: 5px; background: rgba(20, 20, 30, .55); }
   .scene .card { position: absolute; bottom: 24px; width: 150px; height: 96px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .15); }
 
-  /* The bar, drawn with the same tokens as palette.js (FEATHER.vars), at 80% of its real width */
+  /* The bar, drawn at its real size with the same tokens as palette.js (FEATHER.vars), then scaled to fit the stage */
   .bar {
-    position: relative; width: min(calc(var(--width) * .8), calc(100% - 32px)); border-radius: 20px; overflow: hidden;
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: var(--width); border-radius: 20px; overflow: hidden;
     background: var(--surface); border: 1px solid var(--edge); color: var(--text);
     backdrop-filter: blur(var(--blur)) saturate(1.9); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.9);
     box-shadow: 0 1px 0 var(--shine) inset, 0 32px 80px -16px rgba(0, 0, 0, .45), 0 6px 18px rgba(0, 0, 0, .1);
-    transition: width .25s cubic-bezier(.23, 1, .32, 1);
   }
-  .bar .field { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 54px; font-size: 18px; font-weight: 450; }
+  .bar .field { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 58px; font-size: 19px; font-weight: 450; }
   .bar .field svg { color: var(--muted); flex: none; }
   .bar .fill { background: var(--accent); color: #fff; border-radius: 2px; }
-  .bar ul { list-style: none; margin: 0; padding: 6px; border-top: 1px solid var(--line); }
-  .bar li { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 12px; position: relative; }
+  .bar ul { list-style: none; margin: 0; padding: 6px; border-top: 1px solid var(--line); height: var(--list-h); overflow: hidden; }
+  .bar li { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 12px; position: relative; }
   .bar li[hidden] { display: none; }
   .bar li.on { background: var(--sel); box-shadow: 0 1px 0 var(--shine) inset, 0 1px 3px rgba(0, 0, 0, .06); }
-  .bar li.on::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--accent); }
+  .bar li.on::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--accent); }
   .bar .ico { width: 16px; height: 16px; display: grid; place-items: center; color: var(--muted); }
   .bar .dot { width: 14px; height: 14px; border-radius: 4px; }
   .bar .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bar .t small { margin-left: 10px; font-size: 12.5px; color: var(--muted); }
   .bar .tag { font-size: 12px; color: var(--muted); }
   .bar li.on .tag { color: var(--accent); }
-  .bar .foot { display: flex; gap: 16px; padding: 8px 18px 9px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .bar .foot { display: flex; align-items: center; gap: 16px; height: 41px; padding: 0 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
   .bar kbd { font-family: inherit; font-size: 11px; font-weight: 500; line-height: 1; padding: 3px 6px; border-radius: 6px; background: var(--kbd); box-shadow: 0 1px 0 var(--shine) inset; color: var(--text); }
 
   /* Settings groups */
@@ -106,6 +105,7 @@
   /* Glass slider */
   .range { display: flex; align-items: center; gap: 10px; flex: none; font-size: 12px; color: var(--ink-faint); }
   .range input { width: 170px; accent-color: var(--quill); margin: 0; cursor: pointer; }
+  .range output { min-width: 64px; text-align: right; font-size: 13px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
 
   /* Accent swatches */
   .swatches { display: flex; gap: 6px; border: 0; margin: 0; padding: 0; flex: none; }
@@ -224,12 +224,12 @@
         <fieldset class="swatches" id="accents" aria-labelledby="l-accent"></fieldset>
       </div>
       <div class="row">
-        <div class="label"><div class="name" id="l-width">Width</div></div>
-        <fieldset class="seg" aria-labelledby="l-width">
-          <label><input type="radio" name="width" value="compact"><span>Compact</span></label>
-          <label><input type="radio" name="width" value="standard"><span>Standard</span></label>
-          <label><input type="radio" name="width" value="wide"><span>Wide</span></label>
-        </fieldset>
+        <div class="label"><div class="name"><label for="width">Width</label></div></div>
+        <div class="range"><input type="range" id="width" name="width" min="480" max="960" step="20"><output id="width-out" for="width"></output></div>
+      </div>
+      <div class="row">
+        <div class="label"><div class="name"><label for="rows">Height</label></div><div class="hint">How many results fit before the list scrolls.</div></div>
+        <div class="range"><input type="range" id="rows" name="rows" min="4" max="12" step="1"><output id="rows-out" for="rows"></output></div>
       </div>
       <div class="row">
         <div class="label"><div class="name"><label for="dim">Dim the page</label></div><div class="hint">Darken the page a little while the bar is open.</div></div>

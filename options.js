@@ -27,7 +27,20 @@ function paint() {
   const here = s.enterOpens === 'current';
   $('#p-enter').textContent = here ? 'open here' : 'open';
   $('#p-alt').textContent = here ? 'new tab' : 'open here';
+
+  $('#width-out').textContent = `${s.width} px`;
+  $('#rows-out').textContent = `${s.rows} results`;
+  fitPreview();
 }
+
+// The preview bar is drawn at its real size, then shrunk to fit the stage, so width and height read true.
+function fitPreview() {
+  const stage = $('.stage');
+  const bar = $('#bar');
+  const k = Math.min(1, (stage.clientWidth - 48) / s.width, (stage.clientHeight - 32) / FEATHER.barHeight(s));
+  bar.style.transform = `translate(-50%, -50%) scale(${k.toFixed(3)})`;
+}
+addEventListener('resize', () => s && fitPreview());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => s && paint());
 
 let savedTimer = 0;

@@ -5,7 +5,8 @@ var FEATHER = globalThis.FEATHER || (() => {
     theme: 'system',       // system | light | dark
     glass: 50,             // 0 = frosted, 100 = clear
     accent: 'blue',
-    width: 'standard',     // compact | standard | wide
+    width: 640,            // px, 480–960
+    rows: 8,               // results that fit before the list scrolls, 4–12
     dim: true,             // dim the page behind the bar
     enterOpens: 'newtab',  // newtab | current (Alt+Enter does the other)
     autocomplete: true,
@@ -25,9 +26,18 @@ var FEATHER = globalThis.FEATHER || (() => {
     green: ['#1f8a55', '#82dcae'],
     graphite: ['#454a57', '#c9ccd6']
   };
-  const widths = { compact: 560, standard: 640, wide: 760 };
+  const ROW = 38;      // height of one result row, px
+  const CHROME = 101;  // input (58) + footer (41) + panel border (2), px
+  const listHeight = (s) => s.rows * ROW + 12;
+  const barHeight = (s) => listHeight(s) + CHROME;
 
-  const load = () => chrome.storage.sync.get(defaults);
+  // v1.4 stored width as a named size; turn those into pixels.
+  const legacyWidths = { compact: 560, standard: 640, wide: 760 };
+  const load = async () => {
+    const s = await chrome.storage.sync.get(defaults);
+    if (typeof s.width === 'string') s.width = legacyWidths[s.width] || defaults.width;
+    return s;
+  };
   const save = (patch) => chrome.storage.sync.set(patch);
   const isDark = (s) => s.theme === 'dark' || (s.theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
 
@@ -47,8 +57,8 @@ var FEATHER = globalThis.FEATHER || (() => {
       '--hover': 'rgba(255, 255, 255, .4)', '--sel': 'rgba(255, 255, 255, .7)', '--kbd': 'rgba(255, 255, 255, .6)',
       '--dim': s.dim ? 'rgba(10, 12, 20, .12)' : 'transparent'
     };
-    return { ...tone, '--accent': accent, '--blur': `${Math.round(16 + clear * 48)}px`, '--width': `${widths[s.width] || widths.standard}px` };
+    return { ...tone, '--accent': accent, '--blur': `${Math.round(16 + clear * 48)}px`, '--width': `${s.width}px`, '--list-h': `${listHeight(s)}px` };
   }
 
-  return { defaults, accents, widths, load, save, isDark, vars };
+  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight };
 })();

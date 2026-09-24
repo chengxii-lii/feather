@@ -37,7 +37,7 @@ Made for [Helium](https://helium.computer), and works in any Chromium browser. F
 
 Click the gear in the bar's corner, or right-click feather's toolbar icon and choose **Options**. A live preview shows your changes as you make them.
 
-- **Appearance:** theme (system, light or dark), how clear the glass is, accent color, bar width, and whether the page dims behind the bar
+- **Appearance:** theme (system, light or dark), how clear the glass is, accent color, the bar's width (480–960 px) and height (4–12 results), and whether the page dims behind the bar
 - **Search:** whether Enter opens results in a new tab or the current one, autocomplete, search suggestions, and which of tabs, bookmarks and history to search
 - **Your bangs:** add your own, like `!mdn` → `https://developer.mozilla.org/search?q=%s`
 - **Shortcut:** see the current shortcut and change it

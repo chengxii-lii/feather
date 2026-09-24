@@ -3,7 +3,7 @@ importScripts('settings.js');
 
 const SELF = chrome.runtime.getURL('');
 const POPUP = chrome.runtime.getURL('palette.html');
-const POPUP_H = 440;
+const POPUP_FRAME = 40; // the popup window's title bar and borders
 
 const isBlank = (url = '') =>
   /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '';
@@ -27,11 +27,11 @@ async function openPalette(tab) {
   } catch {
     // New tab, settings and web store pages can't be drawn on: float a small window, centered on the browser, instead.
     const [win, s] = await Promise.all([chrome.windows.get(tab.windowId), FEATHER.load()]);
-    const width = (FEATHER.widths[s.width] || 640) + 16;
+    const width = s.width + 16;
+    const height = FEATHER.barHeight(s) + POPUP_FRAME;
     chrome.windows.create({
-      url: `${POPUP}?tabId=${tab.id}&windowId=${tab.windowId}`, type: 'popup', focused: true,
-      width, height: POPUP_H,
-      left: Math.round(win.left + (win.width - width) / 2), top: Math.round(win.top + (win.height - POPUP_H) / 2)
+      url: `${POPUP}?tabId=${tab.id}&windowId=${tab.windowId}`, type: 'popup', focused: true, width, height,
+      left: Math.round(win.left + (win.width - width) / 2), top: Math.round(win.top + (win.height - height) / 2)
     });
   }
 }

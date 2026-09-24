@@ -37,17 +37,17 @@
   }
   .popup .list { flex: 1; height: auto; }
 
-  .field { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 58px; }
+  .field { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 58px; cursor: text; }
   .field svg { color: var(--muted); flex: none; }
   input {
-    all: unset; flex: 1; font-family: inherit; font-size: 19px; font-weight: 450; line-height: 1.2; color: var(--text); caret-color: var(--accent);
+    all: unset; flex: 1; cursor: text; font-family: inherit; font-size: 19px; font-weight: 450; line-height: 1.2; color: var(--text); caret-color: var(--accent);
   }
   input::placeholder { color: var(--muted); }
 
-  .list { list-style: none; margin: 0; padding: 6px; border-top: 1px solid var(--line); height: min(316px, calc(100vh - 180px)); overflow-y: auto; }
+  .list { list-style: none; margin: 0; padding: 6px; border-top: 1px solid var(--line); height: min(var(--list-h), calc(100vh - 180px)); overflow-y: auto; }
   .row {
     display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 12px;
-    padding: 9px 12px; border-radius: 12px; cursor: default; position: relative;
+    height: 38px; padding: 0 12px; border-radius: 12px; cursor: default; position: relative; /* 38px: see ROW in settings.js */
   }
   .row:hover { background: var(--hover); }
   .row.on { background: var(--sel); box-shadow: 0 1px 0 var(--shine) inset, 0 1px 3px rgba(0,0,0,.06); }
