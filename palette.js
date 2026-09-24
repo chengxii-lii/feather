@@ -1,8 +1,9 @@
-// feather palette UI. Injected into pages as a content script, and also loaded by the new tab page.
+// feather palette UI. Injected into pages as a content script, and also loaded by the popup window
+// (palette.html) on pages extensions can't draw on.
 (() => {
   if (window.__feather) return window.__feather.toggle();
 
-  const ON_NEWTAB = location.protocol === 'chrome-extension:';
+  const IN_POPUP = location.protocol === 'chrome-extension:';
   const LABEL = { tab: 'Switch to tab', bookmark: 'Bookmark', history: 'History', url: 'Open', search: 'Search' };
   const ICON_SEARCH = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="m10.5 10.5 3.5 3.5" stroke-linecap="round"/></svg>';
   const ICON_GLOBE = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2.2 2 9.8 0 12M8 2c-2 2.2-2 9.8 0 12"/></svg>';
@@ -11,31 +12,41 @@
   :host { all: initial; }
   * { box-sizing: border-box; }
   .root {
-    --surface: rgba(250, 250, 252, .9); --line: rgba(20, 22, 30, .1); --text: #17181c;
-    --muted: #6b6f7a; --hover: rgba(20, 22, 30, .05); --accent: #3f55d9; --sel: rgba(63, 85, 217, .1);
-    --kbd: rgba(20, 22, 30, .07);
+    --surface: rgba(255, 255, 255, .5); --edge: rgba(255, 255, 255, .6); --shine: rgba(255, 255, 255, .75);
+    --line: rgba(20, 22, 30, .08); --text: #15161a; --muted: rgba(21, 22, 26, .56);
+    --hover: rgba(255, 255, 255, .4); --accent: #3f55d9; --sel: rgba(255, 255, 255, .7);
+    --kbd: rgba(255, 255, 255, .6); --dim: rgba(10, 12, 20, .12);
     position: fixed; inset: 0; z-index: 2147483647; display: flex; justify-content: center; align-items: flex-start;
-    padding-top: 16vh; background: rgba(12, 14, 20, .18);
+    /* Center a full panel (about 420px tall); results grow downward so the input never jumps. */
+    padding-top: max(24px, calc(50vh - 210px)); background: var(--dim);
     font: 14px/1.35 "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
     color: var(--text); -webkit-font-smoothing: antialiased;
   }
   @media (prefers-color-scheme: dark) {
     .root {
-      --surface: rgba(32, 33, 39, .9); --line: rgba(255, 255, 255, .09); --text: #ecedf1;
-      --muted: #8d919c; --hover: rgba(255, 255, 255, .05); --accent: #93a3ff; --sel: rgba(147, 163, 255, .13);
-      --kbd: rgba(255, 255, 255, .08); background: rgba(0, 0, 0, .3);
+      --surface: rgba(28, 29, 36, .5); --edge: rgba(255, 255, 255, .12); --shine: rgba(255, 255, 255, .14);
+      --line: rgba(255, 255, 255, .08); --text: #f0f1f5; --muted: rgba(240, 241, 245, .52);
+      --hover: rgba(255, 255, 255, .06); --accent: #9aa9ff; --sel: rgba(255, 255, 255, .11);
+      --kbd: rgba(255, 255, 255, .1); --dim: rgba(0, 0, 0, .28);
     }
   }
-  .root.home { background: transparent; }
   .panel {
-    width: min(640px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line);
-    border-radius: 16px; overflow: hidden;
-    backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6);
-    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 24px 60px -12px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.08);
-    animation: in .14s cubic-bezier(.2, .9, .3, 1);
+    width: min(640px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--edge);
+    border-radius: 20px; overflow: hidden;
+    backdrop-filter: blur(40px) saturate(1.9); -webkit-backdrop-filter: blur(40px) saturate(1.9);
+    box-shadow: 0 1px 0 var(--shine) inset, 0 32px 80px -16px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.1);
+    animation: in .16s cubic-bezier(.2, .9, .3, 1);
   }
-  @keyframes in { from { opacity: 0; transform: translateY(-6px) scale(.985); } }
+  @keyframes in { from { opacity: 0; transform: scale(.97); } }
   @media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
+
+  /* Popup window: the panel fills the window, and the page behind it supplies the frosted backdrop. */
+  .root.popup { position: static; height: 100vh; padding: 0; align-items: stretch; background: none; }
+  .popup .panel {
+    width: 100%; display: flex; flex-direction: column; border: 0; border-radius: 0; box-shadow: 0 1px 0 var(--shine) inset; animation: none;
+  }
+  .popup .list { flex: 1; max-height: none; }
+  .popup .foot { margin-top: auto; }
 
   .field { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 58px; }
   .field svg { color: var(--muted); flex: none; }
@@ -48,10 +59,10 @@
   .list:empty { display: none; }
   .row {
     display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 12px;
-    padding: 9px 12px; border-radius: 10px; cursor: default; position: relative;
+    padding: 9px 12px; border-radius: 12px; cursor: default; position: relative;
   }
   .row:hover { background: var(--hover); }
-  .row.on { background: var(--sel); }
+  .row.on { background: var(--sel); box-shadow: 0 1px 0 var(--shine) inset, 0 1px 3px rgba(0,0,0,.06); }
   .row.on::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--accent); }
   .ico { width: 16px; height: 16px; display: grid; place-items: center; color: var(--muted); }
   .ico img { width: 16px; height: 16px; border-radius: 3px; }
@@ -63,14 +74,14 @@
 
   .foot { display: flex; gap: 16px; padding: 8px 18px 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
   .foot span { display: inline-flex; align-items: center; gap: 6px; }
-  kbd { font-family: inherit; font-size: 11px; font-weight: 500; line-height: 1; padding: 3px 6px; border-radius: 5px; background: var(--kbd); color: var(--text); }
+  kbd { font-family: inherit; font-size: 11px; font-weight: 500; line-height: 1; padding: 3px 6px; border-radius: 6px; background: var(--kbd); box-shadow: 0 1px 0 var(--shine) inset; color: var(--text); }
   `;
 
   const isMac = /Mac/.test(navigator.platform);
   const host = document.createElement('div');
   const shadow = host.attachShadow({ mode: 'closed' });
   shadow.innerHTML = `<style>${CSS}</style>
-    <div class="root${ON_NEWTAB ? ' home' : ''}">
+    <div class="root${IN_POPUP ? ' popup' : ''}">
       <div class="panel" role="dialog" aria-label="Search">
         <label class="field">${ICON_SEARCH}<input spellcheck="false" autocomplete="off" placeholder="Search or enter address" aria-label="Search or enter address"></label>
         <ul class="list" role="listbox"></ul>
@@ -94,7 +105,9 @@
   // Keep keystrokes from reaching the page's own shortcuts.
   for (const type of ['keydown', 'keyup', 'keypress']) host.addEventListener(type, (e) => e.stopPropagation());
 
-  let origin = null; // on the new tab page, the worker needs to know which tab we are
+  // In the popup window, the worker needs to know which browser tab we were opened from.
+  const params = new URLSearchParams(location.search);
+  const origin = IN_POPUP ? { tabId: +params.get('tabId') || undefined, windowId: +params.get('windowId') || undefined } : null;
   const send = (msg) => chrome.runtime.sendMessage({ ...msg, origin });
 
   function favicon(url) {
@@ -163,6 +176,8 @@
 
   async function choose(item, here) {
     if (!item) return;
+    // The popup has to stay alive until the worker has the message.
+    if (IN_POPUP) return send({ type: 'open', item, here }).finally(() => window.close());
     close();
     await send({ type: 'open', item, here });
   }
@@ -208,6 +223,7 @@
   }
 
   function close() {
+    if (IN_POPUP) return window.close();
     if (!isOpen) return;
     isOpen = false;
     clearTimeout(timer);
@@ -216,14 +232,7 @@
 
   window.__feather = { toggle: () => (isOpen ? close() : open()) };
 
-  if (ON_NEWTAB) {
-    chrome.tabs.getCurrent().then((tab) => {
-      origin = { tabId: tab.id, windowId: tab.windowId };
-      chrome.runtime.onMessage.addListener((m) => { if (m.type === 'toggle' && m.tabId === tab.id) window.__feather.toggle(); });
-      document.addEventListener('mousedown', () => open());
-      open();
-    });
-  } else {
-    open();
-  }
+  // Clicking back into the browser closes the popup, like clicking outside the bar on a page.
+  if (IN_POPUP) window.addEventListener('blur', () => window.close());
+  open();
 })();

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "feather",
-  "version": "1.0",
+  "version": "1.1",
   "description": "A floating command palette for tabs, bookmarks, history and the web.",
   "permissions": [
     "tabs",
@@ -24,7 +24,7 @@
         "default": "Ctrl+Shift+K",
         "mac": "Command+Shift+K"
       },
-      "description": "Open or close the search bar"
+      "description": "Open or close feather (set this to Ctrl+T)"
     }
   },
   "web_accessible_resources": [
@@ -36,8 +36,5 @@
         "<all_urls>"
       ]
     }
-  ],
-  "chrome_url_overrides": {
-    "newtab": "newtab.html"
-  }
+  ]
 }

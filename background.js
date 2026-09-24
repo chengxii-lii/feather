@@ -1,9 +1,12 @@
 // feather background worker: opens the palette, runs searches, performs actions.
 
-const NEWTAB = chrome.runtime.getURL('newtab.html');
+const SELF = chrome.runtime.getURL('');
+const POPUP = chrome.runtime.getURL('palette.html');
+const POPUP_W = 680;
+const POPUP_H = 470;
 
 const isBlank = (url = '') =>
-  /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '' || url.startsWith(NEWTAB);
+  /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '';
 
 chrome.commands.onCommand.addListener(async (cmd, tab) => {
   if (cmd !== 'toggle-palette') return;
@@ -14,15 +17,21 @@ chrome.action.onClicked.addListener(openPalette);
 
 async function openPalette(tab) {
   if (!tab) return;
-  // Our own new tab page draws the bar itself; just tell it to toggle.
-  if (isBlank(tab.url)) {
-    return chrome.runtime.sendMessage({ type: 'toggle', tabId: tab.id }).catch(() => chrome.tabs.create({ windowId: tab.windowId }));
-  }
+  // Pressing the shortcut again while the popup window is up closes it.
+  const popups = (await chrome.windows.getAll({ populate: true, windowTypes: ['popup'] }))
+    .filter((w) => w.tabs.some((t) => t.url?.startsWith(POPUP)));
+  if (popups.length) return popups.forEach((w) => chrome.windows.remove(w.id));
+
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['palette.js'] });
   } catch {
-    // Settings pages, the web store, etc. can't be drawn on: open a new tab, which shows the bar.
-    chrome.tabs.create({ windowId: tab.windowId, index: tab.index + 1 });
+    // New tab, settings and web store pages can't be drawn on: float a small window over the browser instead.
+    const win = await chrome.windows.get(tab.windowId);
+    chrome.windows.create({
+      url: `${POPUP}?tabId=${tab.id}&windowId=${tab.windowId}`, type: 'popup', focused: true,
+      width: POPUP_W, height: POPUP_H,
+      left: Math.round(win.left + (win.width - POPUP_W) / 2), top: Math.round(win.top + (win.height - POPUP_H) / 3)
+    });
   }
 }
 
@@ -62,7 +71,7 @@ function score(terms, title = '', url = '') {
 
 async function search(raw, ctx) {
   const q = raw.trim();
-  const tabs = (await chrome.tabs.query({})).filter((t) => t.id !== ctx.tabId && !isBlank(t.url));
+  const tabs = (await chrome.tabs.query({})).filter((t) => t.id !== ctx.tabId && !isBlank(t.url) && !t.url.startsWith(SELF));
 
   if (!q) {
     return tabs
