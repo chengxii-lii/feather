@@ -9,6 +9,7 @@ const isBlank = (url = '') =>
   /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '';
 
 chrome.commands.onCommand.addListener(async (cmd, tab) => {
+  if (cmd === 'open-settings') return chrome.runtime.openOptionsPage();
   if (cmd !== 'toggle-palette') return;
   tab ??= (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
   openPalette(tab);

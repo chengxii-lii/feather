@@ -97,7 +97,9 @@ function wire() {
     document.querySelector('.bang:last-child .field-in').focus();
   });
   $('#reset').addEventListener('click', resetClick);
-  $('#change-shortcut').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
+  for (const btn of document.querySelectorAll('.change-shortcut')) {
+    btn.addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
+  }
 }
 
 // ---------- Bangs ----------
@@ -150,24 +152,37 @@ function saveBangs() {
 
 // ---------- Shortcut ----------
 
-async function showShortcut() {
-  const cmd = (await chrome.commands.getAll()).find((c) => c.name === 'toggle-palette');
-  const keys = cmd?.shortcut || '';
-  const el = $('#shortcut');
+function showKeys(el, keys) {
   if (!keys) {
     el.innerHTML = '<span class="unset">Not set</span>';
-  } else {
-    const box = document.createElement('span');
-    box.className = 'keys';
-    box.replaceChildren(...keys.split('+').map((k) => Object.assign(document.createElement('kbd'), { textContent: k })));
-    el.replaceChildren(box);
+    return;
   }
-  $('#shortcut-hint').textContent = /^Ctrl\+T$|^⌘T$/.test(keys)
+  const box = document.createElement('span');
+  box.className = 'keys';
+  // "Ctrl+Shift+," splits into Ctrl / Shift / ,
+  box.replaceChildren(...keys.split(/\+(?!$)/).map((k) => Object.assign(document.createElement('kbd'), { textContent: k })));
+  el.replaceChildren(box);
+}
+
+async function showShortcuts() {
+  const all = await chrome.commands.getAll();
+  const keysFor = (name) => all.find((c) => c.name === name)?.shortcut || '';
+
+  const toggle = keysFor('toggle-palette');
+  showKeys($('#toggle-palette-keys'), toggle);
+  $('#toggle-palette-hint').textContent = /^Ctrl\+T$|^⌘T$/.test(toggle)
     ? 'Ctrl+T opens feather instead of a new tab.'
     : 'Set it to Ctrl+T to open feather instead of a new tab.';
+
+  const settings = keysFor('open-settings');
+  showKeys($('#open-settings-keys'), settings);
+  const inBar = /Mac/.test(navigator.platform) ? '⌘,' : 'Ctrl+,';
+  $('#open-settings-hint').textContent = settings
+    ? `Works anywhere in the browser. ${inBar} also works while the bar is open.`
+    : `Pick any keys you like. ${inBar} already works while the bar is open.`;
 }
-// The shortcut is changed on the browser's own page, so refresh when you come back.
-addEventListener('focus', showShortcut);
+// Shortcuts are changed on the browser's own page, so refresh when you come back.
+addEventListener('focus', showShortcuts);
 
 // ---------- Reset ----------
 
@@ -198,5 +213,5 @@ function resetClick() {
   fill();
   paint();
   wire();
-  showShortcut();
+  showShortcuts();
 })();

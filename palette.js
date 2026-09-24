@@ -83,7 +83,7 @@
           <span><kbd>Enter</kbd> <b class="enter-does">open</b></span>
           <span><kbd>${isMac ? '⌥' : 'Alt'} Enter</kbd> <b class="alt-does">open here</b></span>
           <span><kbd>Esc</kbd> close</span>
-          <button class="gear" title="feather settings" aria-label="feather settings">${ICON_GEAR}</button>
+          <button class="gear" title="Settings (${isMac ? '⌘,' : 'Ctrl+,'})" aria-label="feather settings">${ICON_GEAR}</button>
         </div>
       </div>
     </div>`;
@@ -250,6 +250,10 @@
       // If results are stale (typed fast), search first, then act.
       const pending = typed !== lastQuery ? query() : Promise.resolve();
       pending.then(() => choose(items[sel], e.altKey));
+    } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === ',') {
+      // Ctrl+, (Cmd+, on Mac) opens settings, like most apps.
+      e.preventDefault();
+      send({ type: 'settings' }).finally(close);
     } else if (e.key === 'ArrowRight' && input.value !== typed && input.selectionEnd === input.value.length) {
       // Right arrow accepts the inline completion.
       e.preventDefault();
