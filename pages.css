@@ -1,5 +1,23 @@
-/* feather's own pages (new tab and empty page): a calm sky, or your wallpaper when you've chosen one.
+/* feather's own pages (new tab and empty page): warm paper, or your wallpaper when you've chosen one.
    The theme class on <html> comes from palette.js. */
-html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(160deg, #eef0f7, #e4e8f2 50%, #ebe6f1); }
-html.dark, html.dark body { background: linear-gradient(160deg, #16171d, #1d1f27 50%, #1e1a24); }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #faf9f5; }
+html.dark, html.dark body { background: #262624; }
 .wallpaper { position: fixed; left: 0; top: 0; background-size: cover; background-position: center; pointer-events: none; }
+
+/* Empty page: one quiet line. */
+.rest { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.rest p {
+  margin: 0; display: flex; align-items: center; gap: 8px;
+  font: 400 22px/1.3 ui-serif, Georgia, "Times New Roman", serif; letter-spacing: -.005em; color: #73726c;
+  animation: fade .5s cubic-bezier(.23, 1, .32, 1) both;
+}
+html.dark .rest p { color: #a6a39a; }
+html.has-wallpaper .rest p { color: rgba(255, 255, 255, .92); text-shadow: 0 1px 16px rgba(0, 0, 0, .35); }
+.rest kbd {
+  font: 500 13px/1 "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; min-width: 26px; text-align: center;
+  padding: 6px 8px; border-radius: 7px; background: #fff; color: #141413; text-shadow: none;
+  box-shadow: 0 0 0 1px rgba(31, 30, 29, .13), 0 1px 2px rgba(31, 30, 29, .06);
+}
+html.dark .rest kbd { background: #30302e; color: #faf9f5; box-shadow: 0 0 0 1px rgba(222, 220, 209, .14); }
+@keyframes fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .rest p { animation: none; } }

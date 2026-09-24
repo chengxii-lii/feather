@@ -3,8 +3,8 @@
 var FEATHER = globalThis.FEATHER || (() => {
   const defaults = {
     theme: 'system',       // system | light | dark
-    glass: 50,             // 0 = frosted, 100 = clear
-    accent: 'blue',
+    glass: 10,             // 0 = solid paper, 100 = clear glass
+    accent: 'clay',
     width: 640,            // px, 480–960
     rows: 8,               // results that fit before the list scrolls, 4–12
     dim: true,             // dim the page behind the bar
@@ -20,10 +20,10 @@ var FEATHER = globalThis.FEATHER || (() => {
 
   // Each accent as [light, dark].
   const accents = {
+    clay: ['#c96442', '#d97757'],
     blue: ['#3f55d9', '#9aa9ff'],
     violet: ['#7446d6', '#bda4ff'],
     pink: ['#cc3a7e', '#ff9fcb'],
-    orange: ['#c95a14', '#ffb27d'],
     green: ['#1f8a55', '#82dcae'],
     graphite: ['#454a57', '#c9ccd6']
   };
@@ -43,20 +43,21 @@ var FEATHER = globalThis.FEATHER || (() => {
   const isDark = (s) => s.theme === 'dark' || (s.theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
 
   // The bar's look as CSS custom properties, so the palette and the settings preview stay identical.
+  // Warm paper in light mode, warm charcoal in dark; the glass setting only thins the surface out.
   function vars(s, dark = isDark(s)) {
     const clear = s.glass / 100;
-    const alpha = (0.8 - clear * 0.6).toFixed(2);
-    const accent = (accents[s.accent] || accents.blue)[dark ? 1 : 0];
+    const alpha = (1 - clear * 0.62).toFixed(2);
+    const accent = (accents[s.accent] || accents.clay)[dark ? 1 : 0];
     const tone = dark ? {
-      '--surface': `rgba(28, 29, 36, ${alpha})`, '--edge': 'rgba(255, 255, 255, .12)', '--shine': 'rgba(255, 255, 255, .14)',
-      '--line': 'rgba(255, 255, 255, .08)', '--text': '#f0f1f5', '--muted': 'rgba(240, 241, 245, .52)',
-      '--hover': 'rgba(255, 255, 255, .06)', '--sel': 'rgba(255, 255, 255, .11)', '--kbd': 'rgba(255, 255, 255, .1)',
-      '--dim': s.dim ? 'rgba(0, 0, 0, .28)' : 'transparent'
+      '--surface': `rgba(48, 48, 46, ${alpha})`, '--edge': 'rgba(222, 220, 209, .14)', '--shine': 'rgba(255, 255, 255, .04)',
+      '--line': 'rgba(222, 220, 209, .1)', '--text': '#faf9f5', '--muted': '#a6a39a',
+      '--hover': 'rgba(222, 220, 209, .05)', '--sel': 'rgba(222, 220, 209, .09)', '--kbd': 'rgba(222, 220, 209, .1)',
+      '--dim': s.dim ? 'rgba(0, 0, 0, .4)' : 'transparent'
     } : {
-      '--surface': `rgba(255, 255, 255, ${alpha})`, '--edge': 'rgba(255, 255, 255, .6)', '--shine': 'rgba(255, 255, 255, .75)',
-      '--line': 'rgba(20, 22, 30, .08)', '--text': '#15161a', '--muted': 'rgba(21, 22, 26, .56)',
-      '--hover': 'rgba(255, 255, 255, .4)', '--sel': 'rgba(255, 255, 255, .7)', '--kbd': 'rgba(255, 255, 255, .6)',
-      '--dim': s.dim ? 'rgba(10, 12, 20, .12)' : 'transparent'
+      '--surface': `rgba(255, 255, 255, ${alpha})`, '--edge': 'rgba(31, 30, 29, .13)', '--shine': 'rgba(255, 255, 255, 0)',
+      '--line': 'rgba(31, 30, 29, .08)', '--text': '#141413', '--muted': '#73726c',
+      '--hover': 'rgba(31, 30, 29, .035)', '--sel': 'rgba(31, 30, 29, .06)', '--kbd': 'rgba(31, 30, 29, .06)',
+      '--dim': s.dim ? 'rgba(20, 20, 19, .22)' : 'transparent'
     };
     return { ...tone, '--accent': accent, '--blur': `${Math.round(16 + clear * 48)}px`, '--width': `${s.width}px`, '--list-h': `${listHeight(s)}px` };
   }

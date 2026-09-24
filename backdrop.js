@@ -5,6 +5,7 @@
   const image = await FEATHER.getWallpaper();
   if (!image) return;
 
+  document.documentElement.classList.add('has-wallpaper');
   const layer = document.createElement('div');
   layer.className = 'wallpaper';
   layer.style.backgroundImage = `url("${image}")`;
