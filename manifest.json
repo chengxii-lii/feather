@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "feather",
-  "version": "1.1.0",
+  "version": "1.0",
   "description": "A floating command palette for tabs, bookmarks, history and the web.",
   "permissions": [
     "tabs",
