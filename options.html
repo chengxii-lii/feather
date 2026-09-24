@@ -134,6 +134,10 @@
   .btn.quiet:hover { color: var(--ink); background: var(--well); }
   .btn.danger { color: var(--warn); }
 
+  /* Wallpaper thumbnail: screen-shaped, with a hairline edge */
+  .thumb { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; outline: 1px solid rgba(0, 0, 0, .1); outline-offset: -1px; flex: none; }
+  html[data-theme="dark"] .thumb { outline-color: rgba(255, 255, 255, .1); }
+
   /* Shortcut */
   .keys { display: inline-flex; gap: 4px; }
   .keys kbd { font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1; min-width: 26px; text-align: center; padding: 6px 8px; border-radius: 7px; background: var(--cloud); box-shadow: var(--ring), inset 0 -1px 0 var(--hairline); }
@@ -295,6 +299,22 @@
         <input type="checkbox" role="switch" class="switch" id="pinnedUnload" name="pinnedUnload">
       </div>
     </div>
+  </section>
+
+  <h2 class="feature">Pages</h2>
+  <p class="lede">feather's new tab page, and the empty page you land on after closing your last tab.</p>
+  <section>
+    <h3>Background</h3>
+    <div class="card">
+      <div class="row">
+        <div class="label"><div class="name">Wallpaper</div><div class="hint" id="wp-hint">Choose your desktop wallpaper and feather lines it up with your screen, so its pages look see-through.</div></div>
+        <img class="thumb" id="wp-thumb" alt="Your wallpaper" hidden>
+        <button class="btn quiet danger" id="wp-remove" type="button" hidden>Remove</button>
+        <button class="btn" id="wp-choose" type="button">Choose image</button>
+        <input type="file" id="wp-file" accept="image/*" hidden>
+      </div>
+    </div>
+    <p class="note">A browser page can't be truly transparent, so this shows a copy of your wallpaper. If you change your wallpaper, choose it here again. Animated wallpapers show as a still image.</p>
   </section>
 
   <h2 class="feature">Shortcuts</h2>

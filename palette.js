@@ -1,11 +1,13 @@
-// feather palette UI. Injected into websites as a content script. Also loaded by feather's new tab page
-// (newtab.html), and by the toolbar popup (palette.html) on browser pages no extension can draw on.
+// feather palette UI. Injected into websites as a content script. Also loaded by feather's own pages
+// (newtab.html, empty.html), and by the toolbar popup (palette.html) on browser pages no extension can draw on.
 (() => {
   if (window.__feather) return window.__feather.toggle();
 
   const IN_EXT = location.protocol === 'chrome-extension:';
   const ON_NEWTAB = IN_EXT && location.pathname.endsWith('/newtab.html');
-  const IN_POPUP = IN_EXT && !ON_NEWTAB;
+  const ON_EMPTY = IN_EXT && location.pathname.endsWith('/empty.html');
+  const ON_PAGE = ON_NEWTAB || ON_EMPTY; // feather's own pages: the bar floats here like on a website
+  const IN_POPUP = IN_EXT && !ON_PAGE;
   const LABEL = { tab: 'Switch to tab', bookmark: 'Bookmark', history: 'History', url: 'Open', search: 'Search' };
   const ICON_SEARCH = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="m10.5 10.5 3.5 3.5" stroke-linecap="round"/></svg>';
   const ICON_GEAR = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" stroke-linecap="round"/></svg>';
@@ -319,13 +321,20 @@
   // Clicking back into the browser closes the popup, like clicking outside the bar on a page.
   if (IN_POPUP) window.addEventListener('blur', () => window.close());
 
-  if (ON_NEWTAB) {
-    // The new tab page opens straight into the bar, like Zen. Esc or clicking outside hides it;
-    // clicking the empty page, Ctrl+T or the toolbar icon brings it back.
+  if (ON_PAGE) {
+    // Ctrl+T or the toolbar icon toggles the bar on feather's own pages.
     chrome.tabs.getCurrent().then((tab) => {
       origin = { tabId: tab.id, windowId: tab.windowId };
       chrome.runtime.onMessage.addListener((m) => { if (m.type === 'toggle' && m.tabId === tab.id) window.__feather.toggle(); });
-      // Capture phase, so it sees the bar's state before a click on the backdrop closes it.
+      if (ON_EMPTY) {
+        // The empty page (after closing your last tab) is ready for the bar before any key is pressed.
+        applySettings(settings);
+        FEATHER.load().then(applySettings);
+        return;
+      }
+      // The new tab page opens straight into the bar, like Zen. Esc or clicking outside hides it;
+      // clicking the empty page brings it back. Capture phase, so it sees the bar's state before a
+      // click on the backdrop closes it.
       document.addEventListener('mousedown', () => { if (!isOpen) open(); }, true);
       open();
     });

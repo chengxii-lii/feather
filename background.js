@@ -3,9 +3,11 @@ importScripts('settings.js');
 
 const SELF = chrome.runtime.getURL('');
 const NEWTAB = chrome.runtime.getURL('newtab.html');
+const EMPTY = chrome.runtime.getURL('empty.html'); // where you land after closing your last tab
+const isOwnPage = (url = '') => url.startsWith(NEWTAB) || url.startsWith(EMPTY);
 
 const isBlank = (url = '') =>
-  /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '' || url.startsWith(NEWTAB);
+  /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '' || isOwnPage(url);
 
 chrome.commands.onCommand.addListener(async (cmd, tab) => {
   if (cmd === 'open-settings') return chrome.runtime.openOptionsPage();
@@ -18,8 +20,8 @@ chrome.action.onClicked.addListener(openPalette);
 
 async function openPalette(tab) {
   if (!tab) return;
-  // feather's own new tab page draws the bar itself; tell it to toggle.
-  if (tab.url?.startsWith(NEWTAB)) return chrome.runtime.sendMessage({ type: 'toggle', tabId: tab.id }).catch(() => {});
+  // feather's own pages draw the bar themselves; tell them to toggle.
+  if (isOwnPage(tab.url)) return chrome.runtime.sendMessage({ type: 'toggle', tabId: tab.id }).catch(() => {});
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['settings.js', 'palette.js'] });
   } catch {
@@ -49,15 +51,16 @@ async function closeTab(tab) {
   const awake = others.filter((t) => !(t.pinned && t.discarded));
 
   if (!tab.pinned) {
-    // Don't let closing a normal tab wake up an unloaded pinned tab: land on a new tab instead.
-    if (others.length && !awake.length) await chrome.tabs.create({ windowId: tab.windowId });
+    // Closing your last tab lands on feather's empty page, instead of closing the window or waking an
+    // unloaded pinned tab. Ctrl+W on the empty page itself really closes it.
+    if (!awake.length && !tab.url?.startsWith(EMPTY)) await chrome.tabs.create({ windowId: tab.windowId, url: EMPTY });
     return chrome.tabs.remove(tab.id);
   }
 
-  // Go back to the tab you used last. If only unloaded pinned tabs are left, open a new tab.
+  // Go back to the tab you used last. If only unloaded pinned tabs are left, land on the empty page.
   const next = awake.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
   if (next) await chrome.tabs.update(next.id, { active: true });
-  else await chrome.tabs.create({ windowId: tab.windowId });
+  else await chrome.tabs.create({ windowId: tab.windowId, url: EMPTY });
   // A tab can only be unloaded once it's in the background.
   await chrome.tabs.discard(tab.id).catch(() => {});
 }

@@ -190,6 +190,41 @@ async function showShortcuts() {
 // Shortcuts are changed on the browser's own page, so refresh when you come back.
 addEventListener('focus', showShortcuts);
 
+// ---------- Wallpaper ----------
+
+async function showWallpaper() {
+  const image = await FEATHER.getWallpaper();
+  $('#wp-thumb').hidden = $('#wp-remove').hidden = !image;
+  if (image) $('#wp-thumb').src = image;
+  $('#wp-choose').textContent = image ? 'Change' : 'Choose image';
+}
+
+// Shrink big images to screen size and store them as JPEG, so they fit comfortably in storage.
+async function useWallpaper(file) {
+  const bitmap = await createImageBitmap(file);
+  const max = Math.max(screen.width, screen.height) * devicePixelRatio || 3840;
+  const k = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+  const canvas = Object.assign(document.createElement('canvas'), { width: Math.round(bitmap.width * k), height: Math.round(bitmap.height * k) });
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  await FEATHER.setWallpaper(canvas.toDataURL('image/jpeg', 0.9));
+  await showWallpaper();
+  saved();
+}
+
+function wireWallpaper() {
+  $('#wp-choose').addEventListener('click', () => $('#wp-file').click());
+  $('#wp-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) useWallpaper(file).catch(() => { $('#wp-hint').textContent = 'That image couldn’t be opened. Try a JPG or PNG.'; });
+    e.target.value = '';
+  });
+  $('#wp-remove').addEventListener('click', async () => {
+    await FEATHER.setWallpaper('');
+    await showWallpaper();
+    saved();
+  });
+}
+
 // ---------- Reset ----------
 
 let armed = 0;
@@ -204,7 +239,8 @@ function resetClick() {
   armed = 0;
   btn.textContent = 'Reset to defaults';
   s = structuredClone(FEATHER.defaults);
-  chrome.storage.sync.clear().then(saved);
+  Promise.all([chrome.storage.sync.clear(), FEATHER.setWallpaper('')]).then(saved);
+  showWallpaper();
   fill();
   paint();
 }
@@ -219,5 +255,7 @@ function resetClick() {
   fill();
   paint();
   wire();
+  wireWallpaper();
+  showWallpaper();
   showShortcuts();
 })();

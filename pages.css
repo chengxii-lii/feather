@@ -1,0 +1,5 @@
+/* feather's own pages (new tab and empty page): a calm sky, or your wallpaper when you've chosen one.
+   The theme class on <html> comes from palette.js. */
+html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(160deg, #eef0f7, #e4e8f2 50%, #ebe6f1); }
+html.dark, html.dark body { background: linear-gradient(160deg, #16171d, #1d1f27 50%, #1e1a24); }
+.wallpaper { position: fixed; left: 0; top: 0; background-size: cover; background-position: center; pointer-events: none; }

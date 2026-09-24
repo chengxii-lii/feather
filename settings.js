@@ -61,5 +61,9 @@ var FEATHER = globalThis.FEATHER || (() => {
     return { ...tone, '--accent': accent, '--blur': `${Math.round(16 + clear * 48)}px`, '--width': `${s.width}px`, '--list-h': `${listHeight(s)}px` };
   }
 
-  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight };
+  // The wallpaper image is too big for synced settings, so it lives in this computer's storage.
+  const getWallpaper = async () => (await chrome.storage.local.get('wallpaper')).wallpaper || '';
+  const setWallpaper = (dataUrl) => (dataUrl ? chrome.storage.local.set({ wallpaper: dataUrl }) : chrome.storage.local.remove('wallpaper'));
+
+  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight, getWallpaper, setWallpaper };
 })();
