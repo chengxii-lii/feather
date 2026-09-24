@@ -216,13 +216,13 @@
     input.setSelectionRange(typed.length, shown.length);
   }
 
-  // Search suggestions arrive after the local results; slot them in under the search row.
+  // Web suggestions arrive after the local results and go last: pages you've actually visited
+  // (history, open tabs, bookmarks) stay near the top.
   async function suggest(id, q) {
     const words = await send({ type: 'suggest', q }).catch(() => null);
     if (id !== reqId || !Array.isArray(words) || !words.length) return;
     const picked = items[sel];
-    const at = items.findIndex((it) => it.kind === 'search') + 1 || Math.min(items.length, 1);
-    items.splice(at, 0, ...words.map((w) => ({ kind: 'search', title: w, label: '' })));
+    items.push(...words.map((w) => ({ kind: 'search', title: w, label: '' })));
     sel = Math.max(0, items.indexOf(picked));
     render();
   }

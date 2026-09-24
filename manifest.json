@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "feather",
-  "version": "2.3",
+  "version": "2.4",
   "description": "Quality-of-life upgrades for Helium: a floating command bar, Zen-style pinned tabs and more. Works in any Chromium browser.",
   "icons": {
     "16": "icons/icon16.png",
