@@ -1,9 +1,11 @@
-// feather palette UI. Injected into pages as a content script, and also loaded by the popup window
-// (palette.html) on pages extensions can't draw on.
+// feather palette UI. Injected into websites as a content script. Also loaded by feather's new tab page
+// (newtab.html), and by the toolbar popup (palette.html) on browser pages no extension can draw on.
 (() => {
   if (window.__feather) return window.__feather.toggle();
 
-  const IN_POPUP = location.protocol === 'chrome-extension:';
+  const IN_EXT = location.protocol === 'chrome-extension:';
+  const ON_NEWTAB = IN_EXT && location.pathname.endsWith('/newtab.html');
+  const IN_POPUP = IN_EXT && !ON_NEWTAB;
   const LABEL = { tab: 'Switch to tab', bookmark: 'Bookmark', history: 'History', url: 'Open', search: 'Search' };
   const ICON_SEARCH = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="m10.5 10.5 3.5 3.5" stroke-linecap="round"/></svg>';
   const ICON_GEAR = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" stroke-linecap="round"/></svg>';
@@ -101,7 +103,12 @@
   function applySettings(s) {
     settings = s;
     for (const [name, value] of Object.entries(FEATHER.vars(s))) root.style.setProperty(name, value);
-    if (IN_POPUP) document.documentElement.classList.toggle('dark', FEATHER.isDark(s)); // popup backdrop follows the theme
+    if (IN_EXT) document.documentElement.classList.toggle('dark', FEATHER.isDark(s)); // our pages' backdrop follows the theme
+    if (IN_POPUP) {
+      // A toolbar popup takes the size of its page, up to 800×600.
+      document.documentElement.style.width = `${Math.min(s.width, 800)}px`;
+      document.documentElement.style.height = `${Math.min(FEATHER.barHeight(s), 600)}px`;
+    }
   }
   applySettings(settings);
 
@@ -110,7 +117,7 @@
 
   // In the popup window, the worker needs to know which browser tab we were opened from.
   const params = new URLSearchParams(location.search);
-  const origin = IN_POPUP ? { tabId: +params.get('tabId') || undefined, windowId: +params.get('windowId') || undefined } : null;
+  let origin = IN_POPUP ? { tabId: +params.get('tabId') || undefined, windowId: +params.get('windowId') || undefined } : null;
   const send = (msg) => chrome.runtime.sendMessage({ ...msg, origin });
 
   function favicon(url) {
@@ -311,5 +318,18 @@
 
   // Clicking back into the browser closes the popup, like clicking outside the bar on a page.
   if (IN_POPUP) window.addEventListener('blur', () => window.close());
-  open();
+
+  if (ON_NEWTAB) {
+    // The new tab page opens straight into the bar, like Zen. Esc or clicking outside hides it;
+    // clicking the empty page, Ctrl+T or the toolbar icon brings it back.
+    chrome.tabs.getCurrent().then((tab) => {
+      origin = { tabId: tab.id, windowId: tab.windowId };
+      chrome.runtime.onMessage.addListener((m) => { if (m.type === 'toggle' && m.tabId === tab.id) window.__feather.toggle(); });
+      // Capture phase, so it sees the bar's state before a click on the backdrop closes it.
+      document.addEventListener('mousedown', () => { if (!isOpen) open(); }, true);
+      open();
+    });
+  } else {
+    open();
+  }
 })();

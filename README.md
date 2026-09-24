@@ -20,7 +20,8 @@ Quality-of-life upgrades for [Helium](https://helium.computer), borrowing the be
 ## Command bar
 
 - **Ctrl+T** (or Ctrl+Shift+K until you set Ctrl+T) opens or closes the bar over the current page. Clicking feather's toolbar icon does the same.
-- On pages extensions can't draw on (the new tab page, settings, the web store), the bar opens as a small window in the middle of the browser.
+- **New tabs open straight into the bar**, like Zen. feather replaces the new tab page with a calm, empty page and the bar on top. Esc hides the bar; click the page or press Ctrl+T to bring it back. (The first time, your browser may ask whether to keep this new tab page. Choose to keep it.)
+- **Browser pages:** Chromium doesn't let any extension draw on its own pages (settings, extensions, the Web Store, the PDF viewer). There, the bar drops down from feather's toolbar icon instead.
 
 | Key | Action |
 | --- | --- |

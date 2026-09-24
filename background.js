@@ -2,11 +2,10 @@
 importScripts('settings.js');
 
 const SELF = chrome.runtime.getURL('');
-const POPUP = chrome.runtime.getURL('palette.html');
-const POPUP_FRAME = 40; // the popup window's title bar and borders
+const NEWTAB = chrome.runtime.getURL('newtab.html');
 
 const isBlank = (url = '') =>
-  /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '';
+  /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '' || url.startsWith(NEWTAB);
 
 chrome.commands.onCommand.addListener(async (cmd, tab) => {
   if (cmd === 'open-settings') return chrome.runtime.openOptionsPage();
@@ -19,22 +18,20 @@ chrome.action.onClicked.addListener(openPalette);
 
 async function openPalette(tab) {
   if (!tab) return;
-  // Pressing the shortcut again while the popup window is up closes it.
-  const popups = (await chrome.windows.getAll({ populate: true, windowTypes: ['popup'] }))
-    .filter((w) => w.tabs.some((t) => t.url?.startsWith(POPUP)));
-  if (popups.length) return popups.forEach((w) => chrome.windows.remove(w.id));
-
+  // feather's own new tab page draws the bar itself; tell it to toggle.
+  if (tab.url?.startsWith(NEWTAB)) return chrome.runtime.sendMessage({ type: 'toggle', tabId: tab.id }).catch(() => {});
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['settings.js', 'palette.js'] });
   } catch {
-    // New tab, settings and web store pages can't be drawn on: float a small window, centered on the browser, instead.
-    const [win, s] = await Promise.all([chrome.windows.get(tab.windowId), FEATHER.load()]);
-    const width = s.width + 16;
-    const height = FEATHER.barHeight(s) + POPUP_FRAME;
-    chrome.windows.create({
-      url: `${POPUP}?tabId=${tab.id}&windowId=${tab.windowId}`, type: 'popup', focused: true, width, height,
-      left: Math.round(win.left + (win.width - width) / 2), top: Math.round(win.top + (win.height - height) / 2)
-    });
+    // The browser's own pages (settings, extensions, the Web Store, PDFs) can't be drawn on by any extension.
+    // Drop the bar down from the toolbar icon instead.
+    await chrome.action.setPopup({ tabId: tab.id, popup: `palette.html?tabId=${tab.id}&windowId=${tab.windowId}` });
+    try {
+      await chrome.action.openPopup({ windowId: tab.windowId });
+    } finally {
+      // Clicking the icon should go back to opening the bar normally.
+      chrome.action.setPopup({ tabId: tab.id, popup: '' });
+    }
   }
 }
 
