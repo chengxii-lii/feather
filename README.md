@@ -1,3 +1,5 @@
+<img src="icons/icon128.png" width="80" alt="">
+
 # feather
 
 A floating command palette for Chromium browsers, inspired by Arc and Zen. Press Ctrl+T and a glass search/URL bar floats in the middle of the page, without opening a new tab. From there you can jump to an open tab, find a bookmark or history entry, or search the web.
@@ -28,4 +30,4 @@ Web searches use your default search engine, so Helium's !bangs work.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The feather icon is from [Feather Icons](https://feathericons.com) (MIT). To rebuild the icon PNGs, run `node icons/make-icons.js` (needs Google Chrome).
