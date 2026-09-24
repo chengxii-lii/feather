@@ -1,9 +1,9 @@
 // feather background worker: opens the palette, runs searches, performs actions.
+importScripts('settings.js');
 
 const SELF = chrome.runtime.getURL('');
 const POPUP = chrome.runtime.getURL('palette.html');
-const POPUP_W = 680;
-const POPUP_H = 470;
+const POPUP_H = 440;
 
 const isBlank = (url = '') =>
   /^(chrome|edge|brave|helium):\/\/(newtab|new-tab-page)/.test(url) || url === 'about:blank' || url === '';
@@ -23,14 +23,15 @@ async function openPalette(tab) {
   if (popups.length) return popups.forEach((w) => chrome.windows.remove(w.id));
 
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['palette.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['settings.js', 'palette.js'] });
   } catch {
-    // New tab, settings and web store pages can't be drawn on: float a small window over the browser instead.
-    const win = await chrome.windows.get(tab.windowId);
+    // New tab, settings and web store pages can't be drawn on: float a small window, centered on the browser, instead.
+    const [win, s] = await Promise.all([chrome.windows.get(tab.windowId), FEATHER.load()]);
+    const width = (FEATHER.widths[s.width] || 640) + 16;
     chrome.windows.create({
       url: `${POPUP}?tabId=${tab.id}&windowId=${tab.windowId}`, type: 'popup', focused: true,
-      width: POPUP_W, height: POPUP_H,
-      left: Math.round(win.left + (win.width - POPUP_W) / 2), top: Math.round(win.top + (win.height - POPUP_H) / 3)
+      width, height: POPUP_H,
+      left: Math.round(win.left + (win.width - width) / 2), top: Math.round(win.top + (win.height - POPUP_H) / 2)
     });
   }
 }
@@ -39,7 +40,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const ctx = msg.origin || { tabId: sender.tab?.id, windowId: sender.tab?.windowId };
   const run = msg.type === 'search' ? search(msg.q, ctx)
     : msg.type === 'suggest' ? suggest(msg.q)
-    : msg.type === 'open' ? open(msg.item, msg.here, ctx) : null;
+    : msg.type === 'open' ? open(msg.item, msg.here, ctx)
+    : msg.type === 'settings' ? chrome.runtime.openOptionsPage() : null;
   if (!run) return;
   run.then(reply, (e) => reply({ error: String(e) }));
   return true;
@@ -87,11 +89,22 @@ const BANGS = {
   perplexity: ['Perplexity', 'https://www.perplexity.ai/search?q={}']
 };
 
-function parseBang(q) {
+function parseBang(q, custom = []) {
   const m = q.match(/(?:^|\s)!(\S+)/);
   if (!m) return null;
   const key = m[1].toLowerCase();
   const terms = (q.slice(0, m.index) + ' ' + q.slice(m.index + m[0].length)).trim().replace(/\s+/g, ' ');
+
+  // Your own bangs (from settings) win over the built-in ones. %s marks where the search goes.
+  const mine = custom.find((b) => b.key.toLowerCase() === key);
+  if (mine) {
+    try {
+      const home = new URL(mine.url.replace(/%s/g, ''));
+      const url = terms ? mine.url.replace(/%s/g, encodeURIComponent(terms)) : home.origin;
+      return { kind: 'bang', title: terms || `!${key}`, label: home.hostname.replace(/^www\./, ''), url };
+    } catch { /* a broken URL falls through to the built-in bangs */ }
+  }
+
   const known = BANGS[key];
   if (!known) {
     return { kind: 'bang', title: terms || q, label: `!${key} via DuckDuckGo`, url: 'https://duckduckgo.com/?q=' + encodeURIComponent(q) };
@@ -131,7 +144,8 @@ function inlineCompletion(q, sources) {
 // Search suggestions as you type, from DuckDuckGo.
 async function suggest(raw) {
   const q = raw.trim();
-  if (!q || looksLikeUrl(q) || parseBang(q)) return [];
+  const s = await FEATHER.load();
+  if (!s.suggestions || !q || looksLikeUrl(q) || parseBang(q, s.bangs)) return [];
   const res = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`, { signal: AbortSignal.timeout(1500) });
   const [, list] = await res.json();
   return list.filter((s) => s.toLowerCase() !== q.toLowerCase() && !s.startsWith('!')).slice(0, 4);
@@ -155,7 +169,8 @@ function score(terms, title = '', url = '') {
 
 async function search(raw, ctx) {
   const q = raw.trim();
-  const tabs = (await chrome.tabs.query({})).filter((t) => t.id !== ctx.tabId && !isBlank(t.url) && !t.url.startsWith(SELF));
+  const s = await FEATHER.load();
+  const tabs = !s.tabs ? [] : (await chrome.tabs.query({})).filter((t) => t.id !== ctx.tabId && !isBlank(t.url) && !t.url.startsWith(SELF));
 
   if (!q) {
     return tabs
@@ -166,11 +181,11 @@ async function search(raw, ctx) {
 
   const terms = q.toLowerCase().split(/\s+/);
   const [bookmarks, history] = await Promise.all([
-    chrome.bookmarks.search(q).catch(() => []),
-    chrome.history.search({ text: q, maxResults: 50, startTime: 0 }).catch(() => [])
+    s.bookmarks ? chrome.bookmarks.search(q).catch(() => []) : [],
+    s.history ? chrome.history.search({ text: q, maxResults: 50, startTime: 0 }).catch(() => []) : []
   ]);
 
-  const completion = inlineCompletion(q, [
+  const completion = s.autocomplete && inlineCompletion(q, [
     ...tabs.map((t) => ({ url: t.url, weight: 3 })),
     ...bookmarks.filter((b) => b.url).map((b) => ({ url: b.url, weight: 5 })),
     ...history.map((h) => ({ url: h.url, weight: 1 + (h.visitCount || 0) + 4 * (h.typedCount || 0) }))
@@ -181,17 +196,17 @@ async function search(raw, ctx) {
   const add = (item, bonus) => {
     const key = cleanUrl(item.url).replace(/\/$/, '');
     if (!item.url || seen.has(key)) return;
-    const s = score(terms, item.title, item.url);
-    if (!s) return;
+    const points = score(terms, item.title, item.url);
+    if (!points) return;
     seen.add(key);
-    local.push({ ...item, score: s + bonus });
+    local.push({ ...item, score: points + bonus });
   };
   tabs.forEach((t) => add({ kind: 'tab', id: t.id, windowId: t.windowId, title: t.title, url: t.url }, 6));
   bookmarks.filter((b) => b.url).forEach((b) => add({ kind: 'bookmark', title: b.title, url: b.url }, 3));
   history.forEach((h) => add({ kind: 'history', title: h.title || h.url, url: h.url }, Math.min(4, Math.log2((h.visitCount || 1) + 1))));
   local.sort((a, b) => b.score - a.score);
 
-  const action = parseBang(q) || (looksLikeUrl(q)
+  const action = parseBang(q, s.bangs) || (looksLikeUrl(q)
     ? { kind: 'url', title: q, url: normalizeUrl(q) }
     : { kind: 'search', title: q });
 

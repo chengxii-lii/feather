@@ -6,34 +6,24 @@
   const IN_POPUP = location.protocol === 'chrome-extension:';
   const LABEL = { tab: 'Switch to tab', bookmark: 'Bookmark', history: 'History', url: 'Open', search: 'Search' };
   const ICON_SEARCH = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="m10.5 10.5 3.5 3.5" stroke-linecap="round"/></svg>';
-  const ICON_GLOBE = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2.2 2 9.8 0 12M8 2c-2 2.2-2 9.8 0 12"/></svg>';
+  const ICON_GEAR = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" stroke-linecap="round"/></svg>';
+  const ICON_GLOBE ='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2.2 2 9.8 0 12M8 2c-2 2.2-2 9.8 0 12"/></svg>';
 
   const CSS = `
   :host { all: initial; }
   * { box-sizing: border-box; }
+  /* Colors, glass strength and width come from settings (FEATHER.vars in settings.js). */
   .root {
-    --surface: rgba(255, 255, 255, .5); --edge: rgba(255, 255, 255, .6); --shine: rgba(255, 255, 255, .75);
-    --line: rgba(20, 22, 30, .08); --text: #15161a; --muted: rgba(21, 22, 26, .56);
-    --hover: rgba(255, 255, 255, .4); --accent: #3f55d9; --sel: rgba(255, 255, 255, .7);
-    --kbd: rgba(255, 255, 255, .6); --dim: rgba(10, 12, 20, .12);
-    position: fixed; inset: 0; z-index: 2147483647; display: flex; justify-content: center; align-items: flex-start;
-    /* Center a full panel (about 420px tall); results grow downward so the input never jumps. */
-    padding-top: max(24px, calc(50vh - 210px)); background: var(--dim);
+    position: fixed; inset: 0; z-index: 2147483647; display: flex; justify-content: center; align-items: center;
+    padding: 24px; background: var(--dim);
     font: 14px/1.35 "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
     color: var(--text); -webkit-font-smoothing: antialiased;
   }
-  @media (prefers-color-scheme: dark) {
-    .root {
-      --surface: rgba(28, 29, 36, .5); --edge: rgba(255, 255, 255, .12); --shine: rgba(255, 255, 255, .14);
-      --line: rgba(255, 255, 255, .08); --text: #f0f1f5; --muted: rgba(240, 241, 245, .52);
-      --hover: rgba(255, 255, 255, .06); --accent: #9aa9ff; --sel: rgba(255, 255, 255, .11);
-      --kbd: rgba(255, 255, 255, .1); --dim: rgba(0, 0, 0, .28);
-    }
-  }
+  /* The panel keeps one height whatever the results, so it sits dead center and never jumps. */
   .panel {
-    width: min(640px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--edge);
+    width: min(var(--width), calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--edge);
     border-radius: 20px; overflow: hidden;
-    backdrop-filter: blur(40px) saturate(1.9); -webkit-backdrop-filter: blur(40px) saturate(1.9);
+    backdrop-filter: blur(var(--blur)) saturate(1.9); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.9);
     box-shadow: 0 1px 0 var(--shine) inset, 0 32px 80px -16px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.1);
     animation: in .16s cubic-bezier(.2, .9, .3, 1);
   }
@@ -45,8 +35,7 @@
   .popup .panel {
     width: 100%; display: flex; flex-direction: column; border: 0; border-radius: 0; box-shadow: 0 1px 0 var(--shine) inset; animation: none;
   }
-  .popup .list { flex: 1; max-height: none; }
-  .popup .foot { margin-top: auto; }
+  .popup .list { flex: 1; height: auto; }
 
   .field { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 58px; }
   .field svg { color: var(--muted); flex: none; }
@@ -55,8 +44,7 @@
   }
   input::placeholder { color: var(--muted); }
 
-  .list { list-style: none; margin: 0; padding: 6px; border-top: 1px solid var(--line); max-height: 400px; overflow-y: auto; }
-  .list:empty { display: none; }
+  .list { list-style: none; margin: 0; padding: 6px; border-top: 1px solid var(--line); height: min(316px, calc(100vh - 180px)); overflow-y: auto; }
   .row {
     display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 12px;
     padding: 9px 12px; border-radius: 12px; cursor: default; position: relative;
@@ -72,8 +60,14 @@
   .tag { font-size: 12px; color: var(--muted); }
   .row.on .tag { color: var(--accent); }
 
-  .foot { display: flex; gap: 16px; padding: 8px 18px 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .foot { display: flex; align-items: center; gap: 16px; padding: 6px 10px 6px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
   .foot span { display: inline-flex; align-items: center; gap: 6px; }
+  .foot b { font-weight: inherit; }
+  .gear {
+    all: unset; margin-left: auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--muted); cursor: pointer;
+  }
+  .gear:hover { background: var(--hover); color: var(--text); }
+  .gear:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   kbd { font-family: inherit; font-size: 11px; font-weight: 500; line-height: 1; padding: 3px 6px; border-radius: 6px; background: var(--kbd); box-shadow: 0 1px 0 var(--shine) inset; color: var(--text); }
   `;
 
@@ -86,9 +80,10 @@
         <label class="field">${ICON_SEARCH}<input spellcheck="false" autocomplete="off" placeholder="Search or enter address" aria-label="Search or enter address"></label>
         <ul class="list" role="listbox"></ul>
         <div class="foot">
-          <span><kbd>Enter</kbd> open</span>
-          <span><kbd>${isMac ? '⌥' : 'Alt'} Enter</kbd> open here</span>
+          <span><kbd>Enter</kbd> <b class="enter-does">open</b></span>
+          <span><kbd>${isMac ? '⌥' : 'Alt'} Enter</kbd> <b class="alt-does">open here</b></span>
           <span><kbd>Esc</kbd> close</span>
+          <button class="gear" title="feather settings" aria-label="feather settings">${ICON_GEAR}</button>
         </div>
       </div>
     </div>`;
@@ -101,6 +96,17 @@
   let reqId = 0;
   let timer = 0;
   let isOpen = false;
+  let settings = FEATHER.defaults;
+
+  function applySettings(s) {
+    settings = s;
+    for (const [name, value] of Object.entries(FEATHER.vars(s))) root.style.setProperty(name, value);
+    const here = s.enterOpens === 'current';
+    shadow.querySelector('.enter-does').textContent = here ? 'open here' : 'open';
+    shadow.querySelector('.alt-does').textContent = here ? 'new tab' : 'open here';
+    if (IN_POPUP) document.documentElement.classList.toggle('dark', FEATHER.isDark(s)); // popup backdrop follows the theme
+  }
+  applySettings(settings);
 
   // Keep keystrokes from reaching the page's own shortcuts.
   for (const type of ['keydown', 'keyup', 'keypress']) host.addEventListener(type, (e) => e.stopPropagation());
@@ -213,8 +219,10 @@
     render();
   }
 
-  async function choose(item, here) {
+  // Alt flips whatever Enter does by default ("Enter opens" in settings).
+  async function choose(item, alt) {
     if (!item) return;
+    const here = alt !== (settings.enterOpens === 'current');
     // The popup has to stay alive until the worker has the message.
     if (IN_POPUP) return send({ type: 'open', item, here }).finally(() => window.close());
     close();
@@ -263,11 +271,16 @@
   });
   input.addEventListener('keydown', onKey);
   root.addEventListener('mousedown', (e) => { if (e.target === root) close(); });
+  shadow.querySelector('.gear').addEventListener('click', () => send({ type: 'settings' }).finally(close));
 
-  function open() {
+  async function open() {
     if (isOpen) return;
     isOpen = true;
-    (document.body || document.documentElement).append(host);
+    // Read settings on every open, so changes apply without reloading the page.
+    applySettings(await FEATHER.load().catch(() => settings));
+    if (!isOpen) return;
+    // On <html>, not <body>: a page that transforms its body would otherwise knock the bar off center.
+    document.documentElement.append(host);
     input.value = typed = completion = '';
     allowFill = true;
     items = [];
