@@ -45,14 +45,14 @@ Like Zen: with **Close tab** set to Ctrl+W, closing a pinned tab only unloads it
 
 - feather takes you back to the tab you used last.
 - When every pinned tab is unloaded and nothing else is open, you land on feather's empty page.
-- Normal tabs close as usual. Closing your last tab leaves the empty page instead of closing the window, and never wakes up an unloaded pinned tab. Ctrl+W on the empty page closes it for real.
+- Normal tabs close as usual. Closing your last tab leaves the empty page instead of closing the window, and never wakes up an unloaded pinned tab. Ctrl+W does nothing on the empty page.
 
 This only applies to Ctrl+W (the Close tab shortcut). Closing a pinned tab with its × button or the mouse still closes it, because extensions can't change what those do. Helium doesn't dim unloaded tabs either, so an unloaded pinned tab looks the same as a loaded one.
 
 ## Pages
 
 - **New tab page:** feather replaces the new tab page with a calm page and the bar on top, like Zen. Esc hides the bar; click the page or press Ctrl+T to bring it back. The first time, your browser may ask whether to keep this new tab page. Choose to keep it.
-- **Empty page:** when you close your last tab with Ctrl+W, you land on an empty feather page instead of the window closing. Press Ctrl+T to search from there.
+- **Empty page:** when you close your last tab with Ctrl+W, you land on an empty feather page instead of the window closing. Press Ctrl+T to search from there. Ctrl+W does nothing here; close the window itself if you want it gone.
 - **Wallpaper:** choose your desktop wallpaper in settings, and both pages show it lined up with your screen, so they look see-through. A browser page can't be truly transparent, so this is a copy: if you change your wallpaper, choose it again. On Windows, your current wallpaper is usually in `%AppData%\Microsoft\Windows\Themes`.
 
 On a brand-new tab, Chromium keeps the typing cursor in the address bar. Click the bar, or anywhere on the page, to type in feather instead.

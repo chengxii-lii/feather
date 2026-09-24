@@ -43,7 +43,8 @@ async function openPalette(tab) {
 // Bound to "Close tab", which you set to Ctrl+W.
 async function closeTab(tab) {
   tab ??= (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
-  if (!tab) return;
+  // Ctrl+W does nothing on feather's empty page: it's where you rest after closing everything.
+  if (!tab || tab.url?.startsWith(EMPTY)) return;
   const s = await FEATHER.load();
   if (!s.pinnedUnload) return chrome.tabs.remove(tab.id);
 
@@ -52,8 +53,8 @@ async function closeTab(tab) {
 
   if (!tab.pinned) {
     // Closing your last tab lands on feather's empty page, instead of closing the window or waking an
-    // unloaded pinned tab. Ctrl+W on the empty page itself really closes it.
-    if (!awake.length && !tab.url?.startsWith(EMPTY)) await chrome.tabs.create({ windowId: tab.windowId, url: EMPTY });
+    // unloaded pinned tab.
+    if (!awake.length) await chrome.tabs.create({ windowId: tab.windowId, url: EMPTY });
     return chrome.tabs.remove(tab.id);
   }
 
