@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "feather",
+  "version": "1.1.0",
+  "description": "A floating command palette for tabs, bookmarks, history and the web.",
+  "permissions": [
+    "tabs",
+    "bookmarks",
+    "history",
+    "scripting",
+    "activeTab",
+    "search",
+    "favicon"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open feather"
+  },
+  "commands": {
+    "toggle-palette": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Open or close the search bar"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "_favicon/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  }
+}
