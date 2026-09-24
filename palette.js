@@ -236,8 +236,9 @@
   }
 
   function onKey(e) {
-    const down = e.key === 'ArrowDown' || (e.ctrlKey && (e.key === 'n' || e.key === 'j'));
-    const up = e.key === 'ArrowUp' || (e.ctrlKey && (e.key === 'p' || e.key === 'k'));
+    // Tab and Shift+Tab move through the results too (and never leave the bar).
+    const down = e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey) || (e.ctrlKey && (e.key === 'n' || e.key === 'j'));
+    const up = e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey) || (e.ctrlKey && (e.key === 'p' || e.key === 'k'));
     if (down || up) {
       e.preventDefault();
       if (!items.length) return;
@@ -249,10 +250,9 @@
       // If results are stale (typed fast), search first, then act.
       const pending = typed !== lastQuery ? query() : Promise.resolve();
       pending.then(() => choose(items[sel], e.altKey));
-    } else if (e.key === 'Tab' || (e.key === 'ArrowRight' && input.value !== typed && input.selectionEnd === input.value.length)) {
-      // Tab or Right arrow accepts the inline completion. Tab never leaves the bar.
+    } else if (e.key === 'ArrowRight' && input.value !== typed && input.selectionEnd === input.value.length) {
+      // Right arrow accepts the inline completion.
       e.preventDefault();
-      if (input.value === typed) return;
       typed = input.value;
       input.setSelectionRange(typed.length, typed.length);
       clearTimeout(timer);

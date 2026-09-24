@@ -23,8 +23,8 @@ Made for [Helium](https://helium.computer), and works in any Chromium browser. F
 | --- | --- |
 | Enter | Switch to the tab, or open the result in a new tab |
 | Alt/Option+Enter | Open in the current tab |
-| Tab or Right arrow | Accept the autocompleted address |
-| Up/Down or Ctrl+N/P | Move through the results |
+| Right arrow | Accept the autocompleted address |
+| Tab/Shift+Tab, Up/Down or Ctrl+N/P | Move through the results |
 | Esc | Drop the autocompleted address, or close |
 
 - **Autocomplete:** type the start of a site you've visited and feather fills in the rest (`you` → `youtube.com`), like the address bar.
