@@ -174,6 +174,12 @@ async function showShortcuts() {
     ? 'Ctrl+T opens feather instead of a new tab.'
     : 'Set it to Ctrl+T to open feather instead of a new tab.';
 
+  const close = keysFor('close-tab');
+  showKeys($('#close-tab-keys'), close);
+  $('#close-tab-hint').textContent = /^Ctrl\+W$|^⌘W$/.test(close)
+    ? 'Ctrl+W closes tabs, and unloads pinned ones instead of closing them.'
+    : 'Set it to Ctrl+W so pinned tabs unload instead of closing.';
+
   const settings = keysFor('open-settings');
   showKeys($('#open-settings-keys'), settings);
   const inBar = /Mac/.test(navigator.platform) ? '⌘,' : 'Ctrl+,';
@@ -206,7 +212,7 @@ function resetClick() {
 // ---------- Start ----------
 
 (async () => {
-  $('#ver').textContent = 'Version ' + chrome.runtime.getManifest().version;
+  $('#ver').textContent = 'v' + chrome.runtime.getManifest().version;
   buildAccents();
   s = await FEATHER.load();
   s.bangs = [...s.bangs];

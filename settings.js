@@ -14,7 +14,8 @@ var FEATHER = globalThis.FEATHER || (() => {
     tabs: true,
     bookmarks: true,
     history: true,
-    bangs: []              // [{ key: 'mdn', url: 'https://developer.mozilla.org/search?q=%s' }]
+    bangs: [],             // [{ key: 'mdn', url: 'https://developer.mozilla.org/search?q=%s' }]
+    pinnedUnload: true     // "Close tab" (Ctrl+W) unloads pinned tabs instead of closing them
   };
 
   // Each accent as [light, dark].

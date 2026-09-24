@@ -10,6 +10,7 @@ const isBlank = (url = '') =>
 
 chrome.commands.onCommand.addListener(async (cmd, tab) => {
   if (cmd === 'open-settings') return chrome.runtime.openOptionsPage();
+  if (cmd === 'close-tab') return closeTab(tab);
   if (cmd !== 'toggle-palette') return;
   tab ??= (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
   openPalette(tab);
@@ -35,6 +36,33 @@ async function openPalette(tab) {
       left: Math.round(win.left + (win.width - width) / 2), top: Math.round(win.top + (win.height - height) / 2)
     });
   }
+}
+
+// ---------- Pinned tabs (Zen-style) ----------
+
+// Closing a pinned tab only unloads it: it stays in the tab strip and reloads when you come back to it.
+// Bound to "Close tab", which you set to Ctrl+W.
+async function closeTab(tab) {
+  tab ??= (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
+  if (!tab) return;
+  const s = await FEATHER.load();
+  if (!s.pinnedUnload) return chrome.tabs.remove(tab.id);
+
+  const others = (await chrome.tabs.query({ windowId: tab.windowId })).filter((t) => t.id !== tab.id);
+  const awake = others.filter((t) => !(t.pinned && t.discarded));
+
+  if (!tab.pinned) {
+    // Don't let closing a normal tab wake up an unloaded pinned tab: land on a new tab instead.
+    if (others.length && !awake.length) await chrome.tabs.create({ windowId: tab.windowId });
+    return chrome.tabs.remove(tab.id);
+  }
+
+  // Go back to the tab you used last. If only unloaded pinned tabs are left, open a new tab.
+  const next = awake.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
+  if (next) await chrome.tabs.update(next.id, { active: true });
+  else await chrome.tabs.create({ windowId: tab.windowId });
+  // A tab can only be unloaded once it's in the background.
+  await chrome.tabs.discard(tab.id).catch(() => {});
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {

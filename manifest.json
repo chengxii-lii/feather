@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "feather",
-  "version": "1.8",
-  "description": "A floating command palette for tabs, bookmarks, history and the web.",
+  "version": "1.9",
+  "description": "Quality-of-life upgrades for Helium: a floating command bar, Zen-style pinned tabs and more. Works in any Chromium browser.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -26,7 +26,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open feather",
+    "default_title": "Open the feather bar",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png"
@@ -42,7 +42,7 @@
         "default": "Ctrl+Shift+K",
         "mac": "Command+Shift+K"
       },
-      "description": "Open or close feather (set this to Ctrl+T)"
+      "description": "Open or close the command bar (set this to Ctrl+T)"
     },
     "open-settings": {
       "suggested_key": {
@@ -50,6 +50,9 @@
         "mac": "Command+Shift+Comma"
       },
       "description": "Open feather settings"
+    },
+    "close-tab": {
+      "description": "Close tab; pinned tabs unload instead (set this to Ctrl+W)"
     }
   },
   "web_accessible_resources": [

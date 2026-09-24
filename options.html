@@ -75,7 +75,10 @@
 
   /* Settings groups */
   section + section { margin-top: 32px; }
-  h2 { margin: 0 0 10px 4px; font-size: 13px; font-weight: 600; color: var(--ink-soft); letter-spacing: .01em; }
+  .feature { margin: 56px 0 4px; font-size: 18px; font-weight: 650; letter-spacing: -.015em; }
+  .feature:first-of-type { margin-top: 8px; }
+  .lede { margin: 0 0 20px; font-size: 13px; color: var(--ink-soft); text-wrap: pretty; }
+  h3 { margin: 0 0 10px 4px; font-size: 13px; font-weight: 600; color: var(--ink-soft); letter-spacing: .01em; }
   .card { background: var(--cloud); border-radius: 14px; box-shadow: var(--ring); }
   .row { display: flex; align-items: center; gap: 24px; min-height: 60px; padding: 12px 16px; }
   .row + .row { border-top: 1px solid var(--hairline); }
@@ -178,10 +181,13 @@
     <img src="icons/icon128.png" alt="">
     <div>
       <h1>feather</h1>
-      <p class="ver" id="ver"></p>
+      <p class="ver">Quality of life for Helium · <span id="ver"></span></p>
     </div>
     <span class="saved" id="saved" role="status" aria-live="polite">Saved</span>
   </header>
+
+  <h2 class="feature">Command bar</h2>
+  <p class="lede">A floating search and address bar over any page. Search tabs, bookmarks and history, or the web with !bangs.</p>
 
   <div class="stage" aria-label="Preview of the bar" role="img">
     <div class="scene">
@@ -205,7 +211,7 @@
   </div>
 
   <section>
-    <h2>Appearance</h2>
+    <h3>Appearance</h3>
     <div class="card">
       <div class="row">
         <div class="label"><div class="name" id="l-theme">Theme</div></div>
@@ -239,7 +245,7 @@
   </section>
 
   <section>
-    <h2>Search</h2>
+    <h3>Search</h3>
     <div class="card">
       <div class="row">
         <div class="label"><div class="name" id="l-enter">Enter opens results in</div><div class="hint">For searches, bookmarks and history. Addresses you type always open in a new tab. Alt+Enter does the other.</div></div>
@@ -268,7 +274,7 @@
   </section>
 
   <section>
-    <h2>Your bangs</h2>
+    <h3>Your bangs</h3>
     <div class="card">
       <div class="bangs" id="bangs"></div>
       <div class="bang-foot">
@@ -279,12 +285,30 @@
     <p class="note">Type <code>!name</code> anywhere in the bar to search a site directly. Put <code>%s</code> in the address where your search should go. Your bangs win over the built-in ones, and any bang feather doesn't know goes through DuckDuckGo.</p>
   </section>
 
+  <h2 class="feature">Tabs</h2>
+  <p class="lede">Zen-style pinned tabs.</p>
   <section>
-    <h2>Shortcut</h2>
+    <h3>Pinned tabs</h3>
     <div class="card">
       <div class="row">
-        <div class="label"><div class="name">Open or close feather</div><div class="hint" id="toggle-palette-hint"></div></div>
+        <div class="label"><div class="name"><label for="pinnedUnload">Closing a pinned tab unloads it</label></div><div class="hint">It stays pinned and reloads when you open it again. When every pinned tab is unloaded, you land on a new tab. Uses the Close tab shortcut below.</div></div>
+        <input type="checkbox" role="switch" class="switch" id="pinnedUnload" name="pinnedUnload">
+      </div>
+    </div>
+  </section>
+
+  <h2 class="feature">Shortcuts</h2>
+  <p class="lede">Shortcuts are set on your browser's shortcuts page, which is where Change takes you.</p>
+  <section>
+    <div class="card">
+      <div class="row">
+        <div class="label"><div class="name">Open or close the command bar</div><div class="hint" id="toggle-palette-hint"></div></div>
         <span id="toggle-palette-keys"></span>
+        <button class="btn change-shortcut" type="button">Change</button>
+      </div>
+      <div class="row">
+        <div class="label"><div class="name">Close tab</div><div class="hint" id="close-tab-hint"></div></div>
+        <span id="close-tab-keys"></span>
         <button class="btn change-shortcut" type="button">Change</button>
       </div>
       <div class="row">
@@ -293,7 +317,6 @@
         <button class="btn change-shortcut" type="button">Change</button>
       </div>
     </div>
-    <p class="note">Shortcuts are set on your browser's shortcuts page, which is where Change takes you.</p>
   </section>
 
   <footer class="end">
