@@ -101,9 +101,6 @@
   function applySettings(s) {
     settings = s;
     for (const [name, value] of Object.entries(FEATHER.vars(s))) root.style.setProperty(name, value);
-    const here = s.enterOpens === 'current';
-    shadow.querySelector('.enter-does').textContent = here ? 'open here' : 'open';
-    shadow.querySelector('.alt-does').textContent = here ? 'new tab' : 'open here';
     if (IN_POPUP) document.documentElement.classList.toggle('dark', FEATHER.isDark(s)); // popup backdrop follows the theme
   }
   applySettings(settings);
@@ -161,6 +158,7 @@
       li.addEventListener('click', (e) => choose(item, e.altKey));
       return li;
     }));
+    footerFor(items[sel]);
   }
 
   function mark() {
@@ -169,6 +167,7 @@
       li.setAttribute('aria-selected', i === sel);
     });
     list.children[sel]?.scrollIntoView({ block: 'nearest' });
+    footerFor(items[sel]);
   }
 
   let typed = '';       // what you actually typed; input.value may also hold the inline completion after it
@@ -219,10 +218,17 @@
     render();
   }
 
-  // Alt flips whatever Enter does by default ("Enter opens" in settings).
+  // Enter opens a typed address in a new tab; everything else follows "Enter opens" in settings. Alt flips it.
+  const hereByDefault = (item) => item?.kind !== 'url' && settings.enterOpens === 'current';
+  function footerFor(item) {
+    const here = hereByDefault(item);
+    shadow.querySelector('.enter-does').textContent = here ? 'open here' : 'open';
+    shadow.querySelector('.alt-does').textContent = here ? 'new tab' : 'open here';
+  }
+
   async function choose(item, alt) {
     if (!item) return;
-    const here = alt !== (settings.enterOpens === 'current');
+    const here = alt !== hereByDefault(item);
     // The popup has to stay alive until the worker has the message.
     if (IN_POPUP) return send({ type: 'open', item, here }).finally(() => window.close());
     close();

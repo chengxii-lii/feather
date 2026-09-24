@@ -24,7 +24,8 @@ function paint() {
   $('#p-tab').hidden = !s.tabs;
   const first = document.querySelector('#bar li:not([hidden])');
   for (const li of document.querySelectorAll('#bar li')) li.classList.toggle('on', li === first);
-  const here = s.enterOpens === 'current';
+  // The preview's selected row is a typed address when autocomplete is on, and those always open in a new tab.
+  const here = s.enterOpens === 'current' && !s.autocomplete;
   $('#p-enter').textContent = here ? 'open here' : 'open';
   $('#p-alt').textContent = here ? 'new tab' : 'open here';
 

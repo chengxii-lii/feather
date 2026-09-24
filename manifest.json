@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "feather",
-  "version": "1.5",
+  "version": "1.6",
   "description": "A floating command palette for tabs, bookmarks, history and the web.",
   "icons": {
     "16": "icons/icon16.png",
