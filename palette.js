@@ -123,7 +123,7 @@
 
       const ico = document.createElement('span');
       ico.className = 'ico';
-      if (item.kind === 'search') ico.innerHTML = ICON_SEARCH;
+      if (item.kind === 'search' || (item.kind === 'bang' && item.label.endsWith('DuckDuckGo'))) ico.innerHTML = ICON_SEARCH;
       else if (item.kind === 'url') ico.innerHTML = ICON_GLOBE;
       else {
         const img = document.createElement('img');
@@ -138,7 +138,7 @@
       title.className = 'title';
       title.textContent = item.title || item.url;
       text.append(title);
-      if (item.kind !== 'search' && item.kind !== 'url') {
+      if (item.kind === 'tab' || item.kind === 'bookmark' || item.kind === 'history') {
         const url = document.createElement('span');
         url.className = 'url';
         url.textContent = item.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
@@ -147,7 +147,7 @@
 
       const tag = document.createElement('span');
       tag.className = 'tag';
-      tag.textContent = LABEL[item.kind];
+      tag.textContent = item.label ?? LABEL[item.kind];
 
       li.append(ico, text, tag);
       li.addEventListener('mousemove', () => { if (sel !== i) { sel = i; mark(); } });
@@ -165,12 +165,51 @@
     list.children[sel]?.scrollIntoView({ block: 'nearest' });
   }
 
+  let typed = '';       // what you actually typed; input.value may also hold the inline completion after it
+  let completion = '';  // e.g. "youtube.com" while "you" is typed
+  let allowFill = true; // false right after Backspace/Delete, so deleting the fill doesn't bring it back
+  let lastQuery = null;
+
   async function query() {
     const id = ++reqId;
-    const res = await send({ type: 'search', q: input.value }).catch(() => null);
+    const q = (lastQuery = typed);
+    const res = await send({ type: 'search', q }).catch(() => null);
     if (id !== reqId || !Array.isArray(res)) return;
     items = res;
     sel = 0;
+    render();
+    completion = res[0]?.complete || '';
+    fill();
+    syncDefault();
+    if (q.trim()) suggest(id, q);
+  }
+
+  // When the completion isn't showing (you deleted it, or pressed Esc), Enter should do what you typed.
+  function syncDefault() {
+    if (!items[0]?.complete || input.value !== typed) return;
+    items.splice(0, 2, items[1], { ...items[0], complete: '' });
+    sel = 0;
+    render();
+  }
+
+  // Show the rest of the completion after what you typed, selected, so typing on simply replaces it.
+  function fill() {
+    const ok = allowFill && completion.length > typed.length && completion.toLowerCase().startsWith(typed.toLowerCase());
+    const shown = ok ? typed + completion.slice(typed.length) : typed;
+    if (input.value === shown) return;
+    if (input.selectionStart < Math.min(typed.length, input.value.length)) return; // editing mid-text: leave it be
+    input.value = shown;
+    input.setSelectionRange(typed.length, shown.length);
+  }
+
+  // Search suggestions arrive after the local results; slot them in under the search row.
+  async function suggest(id, q) {
+    const words = await send({ type: 'suggest', q }).catch(() => null);
+    if (id !== reqId || !Array.isArray(words) || !words.length) return;
+    const picked = items[sel];
+    const at = items.findIndex((it) => it.kind === 'search') + 1 || Math.min(items.length, 1);
+    items.splice(at, 0, ...words.map((w) => ({ kind: 'search', title: w, label: '' })));
+    sel = Math.max(0, items.indexOf(picked));
     render();
   }
 
@@ -194,18 +233,33 @@
       e.preventDefault();
       clearTimeout(timer);
       // If results are stale (typed fast), search first, then act.
-      const pending = input.value !== lastQuery ? query() : Promise.resolve();
+      const pending = typed !== lastQuery ? query() : Promise.resolve();
       pending.then(() => choose(items[sel], e.altKey));
+    } else if (e.key === 'Tab' || (e.key === 'ArrowRight' && input.value !== typed && input.selectionEnd === input.value.length)) {
+      // Tab or Right arrow accepts the inline completion. Tab never leaves the bar.
+      e.preventDefault();
+      if (input.value === typed) return;
+      typed = input.value;
+      input.setSelectionRange(typed.length, typed.length);
+      clearTimeout(timer);
+      query();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      close();
+      // First Esc drops the completion, like the address bar; the next one closes.
+      if (input.value !== typed) {
+        input.value = typed;
+        completion = '';
+        syncDefault();
+      } else close();
     }
   }
 
-  let lastQuery = null;
-  input.addEventListener('input', () => {
+  input.addEventListener('input', (e) => {
+    typed = input.value;
+    allowFill = !e.inputType?.startsWith('delete');
+    fill(); // keep the last completion showing while new results load
     clearTimeout(timer);
-    timer = setTimeout(() => { lastQuery = input.value; query(); }, 50);
+    timer = setTimeout(query, 50);
   });
   input.addEventListener('keydown', onKey);
   root.addEventListener('mousedown', (e) => { if (e.target === root) close(); });
@@ -214,8 +268,8 @@
     if (isOpen) return;
     isOpen = true;
     (document.body || document.documentElement).append(host);
-    input.value = '';
-    lastQuery = '';
+    input.value = typed = completion = '';
+    allowFill = true;
     items = [];
     render();
     input.focus();

@@ -37,7 +37,9 @@ async function openPalette(tab) {
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const ctx = msg.origin || { tabId: sender.tab?.id, windowId: sender.tab?.windowId };
-  const run = msg.type === 'search' ? search(msg.q, ctx) : msg.type === 'open' ? open(msg.item, msg.here, ctx) : null;
+  const run = msg.type === 'search' ? search(msg.q, ctx)
+    : msg.type === 'suggest' ? suggest(msg.q)
+    : msg.type === 'open' ? open(msg.item, msg.here, ctx) : null;
   if (!run) return;
   run.then(reply, (e) => reply({ error: String(e) }));
   return true;
@@ -52,6 +54,88 @@ function looksLikeUrl(q) {
 }
 const normalizeUrl = (q) => (/^[a-z][\w+.-]*:\/\//i.test(q) ? q : 'https://' + q);
 const cleanUrl = (u = '') => u.toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^www\./, '');
+
+// Helium resolves !bangs in its address bar, which feather bypasses, so feather resolves them itself.
+// Popular bangs go straight to the site; any other bang goes through DuckDuckGo, which knows all of them.
+const BANGS = {
+  g: ['Google', 'https://www.google.com/search?q={}'],
+  gi: ['Google Images', 'https://www.google.com/search?tbm=isch&q={}'],
+  gm: ['Google Maps', 'https://www.google.com/maps/search/{}'],
+  gt: ['Google Translate', 'https://translate.google.com/?sl=auto&tl=en&text={}'],
+  gs: ['Google Scholar', 'https://scholar.google.com/scholar?q={}'],
+  ddg: ['DuckDuckGo', 'https://duckduckgo.com/?q={}'],
+  b: ['Bing', 'https://www.bing.com/search?q={}'],
+  yt: ['YouTube', 'https://www.youtube.com/results?search_query={}'],
+  w: ['Wikipedia', 'https://en.wikipedia.org/wiki/Special:Search?search={}'],
+  wiki: ['Wikipedia', 'https://en.wikipedia.org/wiki/Special:Search?search={}'],
+  r: ['Reddit', 'https://www.reddit.com/search/?q={}'],
+  gh: ['GitHub', 'https://github.com/search?q={}'],
+  so: ['Stack Overflow', 'https://stackoverflow.com/search?q={}'],
+  mdn: ['MDN', 'https://developer.mozilla.org/en-US/search?q={}'],
+  npm: ['npm', 'https://www.npmjs.com/search?q={}'],
+  a: ['Amazon', 'https://www.amazon.com/s?k={}'],
+  ebay: ['eBay', 'https://www.ebay.com/sch/i.html?_nkw={}'],
+  imdb: ['IMDb', 'https://www.imdb.com/find/?q={}'],
+  x: ['X', 'https://x.com/search?q={}'],
+  tw: ['X', 'https://x.com/search?q={}'],
+  twitch: ['Twitch', 'https://www.twitch.tv/search?term={}'],
+  spotify: ['Spotify', 'https://open.spotify.com/search/{}'],
+  pin: ['Pinterest', 'https://www.pinterest.com/search/pins/?q={}'],
+  wa: ['Wolfram Alpha', 'https://www.wolframalpha.com/input?i={}'],
+  maps: ['OpenStreetMap', 'https://www.openstreetmap.org/search?query={}'],
+  chatgpt: ['ChatGPT', 'https://chatgpt.com/?q={}'],
+  perplexity: ['Perplexity', 'https://www.perplexity.ai/search?q={}']
+};
+
+function parseBang(q) {
+  const m = q.match(/(?:^|\s)!(\S+)/);
+  if (!m) return null;
+  const key = m[1].toLowerCase();
+  const terms = (q.slice(0, m.index) + ' ' + q.slice(m.index + m[0].length)).trim().replace(/\s+/g, ' ');
+  const known = BANGS[key];
+  if (!known) {
+    return { kind: 'bang', title: terms || q, label: `!${key} via DuckDuckGo`, url: 'https://duckduckgo.com/?q=' + encodeURIComponent(q) };
+  }
+  const [name, tpl] = known;
+  // A bang on its own ("!yt") goes to the site's home page.
+  const url = terms ? tpl.replace('{}', encodeURIComponent(terms)) : new URL(tpl).origin;
+  return { kind: 'bang', title: terms || name, label: name, url };
+}
+
+// Inline autocomplete: the site you most likely mean, e.g. "you" -> "youtube.com", from history, tabs and bookmarks.
+function inlineCompletion(q, sources) {
+  const lq = q.toLowerCase();
+  if (!lq || /\s|:\/\//.test(lq) || lq.startsWith('www.') || lq.startsWith('!')) return null;
+  const byText = new Map();
+  for (const { url, weight } of sources) {
+    let u;
+    try { u = new URL(url); } catch { continue; }
+    if (!/^https?:$/.test(u.protocol)) continue;
+    const host = u.host.replace(/^www\./, '');
+    const full = url.replace(/^[a-z]+:\/\//i, '').replace(/^www\./i, '');
+    let text, target;
+    if (host.startsWith(lq)) [text, target] = [host, `${u.protocol}//${u.host}/`];
+    else if (lq.includes('/') && full.toLowerCase().startsWith(lq)) [text, target] = [full, url];
+    else continue;
+    const entry = byText.get(text) || { text, url: target, weight: 0 };
+    entry.weight += weight;
+    byText.set(text, entry);
+  }
+  let best = null;
+  for (const e of byText.values()) {
+    if (!best || e.weight > best.weight || (e.weight === best.weight && e.text.length < best.text.length)) best = e;
+  }
+  return best && best.text.length > q.length ? { kind: 'url', title: best.text, url: best.url, complete: best.text } : null;
+}
+
+// Search suggestions as you type, from DuckDuckGo.
+async function suggest(raw) {
+  const q = raw.trim();
+  if (!q || looksLikeUrl(q) || parseBang(q)) return [];
+  const res = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`, { signal: AbortSignal.timeout(1500) });
+  const [, list] = await res.json();
+  return list.filter((s) => s.toLowerCase() !== q.toLowerCase() && !s.startsWith('!')).slice(0, 4);
+}
 
 function score(terms, title = '', url = '') {
   const t = title.toLowerCase();
@@ -86,7 +170,13 @@ async function search(raw, ctx) {
     chrome.history.search({ text: q, maxResults: 50, startTime: 0 }).catch(() => [])
   ]);
 
-  const seen = new Set();
+  const completion = inlineCompletion(q, [
+    ...tabs.map((t) => ({ url: t.url, weight: 3 })),
+    ...bookmarks.filter((b) => b.url).map((b) => ({ url: b.url, weight: 5 })),
+    ...history.map((h) => ({ url: h.url, weight: 1 + (h.visitCount || 0) + 4 * (h.typedCount || 0) }))
+  ]);
+
+  const seen = new Set(completion ? [cleanUrl(completion.url).replace(/\/$/, '')] : []);
   const local = [];
   const add = (item, bonus) => {
     const key = cleanUrl(item.url).replace(/\/$/, '');
@@ -101,9 +191,12 @@ async function search(raw, ctx) {
   history.forEach((h) => add({ kind: 'history', title: h.title || h.url, url: h.url }, Math.min(4, Math.log2((h.visitCount || 1) + 1))));
   local.sort((a, b) => b.score - a.score);
 
-  const action = looksLikeUrl(q)
+  const action = parseBang(q) || (looksLikeUrl(q)
     ? { kind: 'url', title: q, url: normalizeUrl(q) }
-    : { kind: 'search', title: q };
+    : { kind: 'search', title: q });
+
+  // The inline completion is what Enter opens, so it leads; searching for exactly what you typed comes next.
+  if (completion) return [completion, action, ...local.slice(0, 8)];
 
   // A strong local match (e.g. tab title starts with the query) goes above the web action.
   const results = local.slice(0, 9);

@@ -23,10 +23,15 @@ Made for [Helium](https://helium.computer), and works in any Chromium browser. F
 | --- | --- |
 | Enter | Switch to the tab, or open the result in a new tab |
 | Alt/Option+Enter | Open in the current tab |
+| Tab or Right arrow | Accept the autocompleted address |
 | Up/Down or Ctrl+N/P | Move through the results |
-| Esc or click outside | Close |
+| Esc | Drop the autocompleted address, or close |
 
-Web searches use your default search engine, so Helium's !bangs work.
+- **Autocomplete:** type the start of a site you've visited and feather fills in the rest (`you` → `youtube.com`), like the address bar.
+- **Suggestions:** search suggestions appear as you type.
+- **!bangs:** `!yt lofi`, `lofi !yt`, `!gh feather` and so on. Popular bangs go straight to the site, and any other bang goes through DuckDuckGo, which knows all 13,000+ of them. Plain searches use your default search engine.
+
+**Privacy:** to show suggestions, feather sends what you type to DuckDuckGo's autocomplete service. Your tabs, bookmarks and history never leave your computer.
 
 ## License
 
