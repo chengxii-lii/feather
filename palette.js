@@ -182,14 +182,15 @@
   let typed = '';       // what you actually typed; input.value may also hold the inline completion after it
   let completion = '';  // e.g. "youtube.com" while "you" is typed
   let allowFill = true; // false right after Backspace/Delete, so deleting the fill doesn't bring it back
-  let lastQuery = null;
+  let resultsFor = null; // the text the results on screen belong to (they can lag behind fast typing)
 
   async function query() {
     const id = ++reqId;
-    const q = (lastQuery = typed);
+    const q = typed;
     const res = await send({ type: 'search', q }).catch(() => null);
     if (id !== reqId || !Array.isArray(res)) return;
     items = res;
+    resultsFor = q;
     sel = 0;
     render();
     completion = res[0]?.complete || '';
@@ -256,9 +257,10 @@
     } else if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(timer);
-      // If results are stale (typed fast), search first, then act.
-      const pending = typed !== lastQuery ? query() : Promise.resolve();
-      pending.then(() => choose(items[sel], e.altKey));
+      // Typing fast, you can press Enter before the results for your last few letters arrive.
+      // Wait for results that match what's in the box, then act on those.
+      const ready = resultsFor === typed ? Promise.resolve() : query();
+      ready.then(() => choose(resultsFor === typed ? items[sel] : { kind: 'search', title: typed }, e.altKey));
     } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === ',') {
       // Ctrl+, (Cmd+, on Mac) opens settings, like most apps.
       e.preventDefault();
