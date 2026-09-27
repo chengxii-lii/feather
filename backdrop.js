@@ -5,7 +5,11 @@
   const [s, image] = await Promise.all([FEATHER.load(), FEATHER.getWallpaper()]);
   const bg = FEATHER.pageBackground(s, !!image);
   root.dataset.bg = bg;
-  root.style.setProperty('--seed', s.themeColor); // pages.css builds light and dark shades from it
+  // pages.css builds light and dark shades from the theme color's seed and tint.
+  const theme = FEATHER.themeColor(s);
+  root.style.setProperty('--seed', theme.seed);
+  root.style.setProperty('--tint-dark', theme.dark);
+  root.style.setProperty('--tint-light', theme.light);
 
   // Follow light and dark mode as they change, like the browser does.
   const mode = matchMedia('(prefers-color-scheme: dark)');

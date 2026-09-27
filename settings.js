@@ -17,7 +17,38 @@ var FEATHER = globalThis.FEATHER || (() => {
     bangs: [],             // [{ key: 'mdn', url: 'https://developer.mozilla.org/search?q=%s' }]
     pinnedUnload: true,    // "Close tab" (Ctrl+W) unloads pinned tabs instead of closing them
     pageBg: null,          // feather's pages: theme | paper | wallpaper (null: wallpaper if one is chosen, else theme)
-    themeColor: '#26a69a'  // the browser theme's (profile) seed color; Chromium doesn't let extensions read it
+    themeColor: 'aqua'     // which of the browser's theme colors you use (see themeColors); extensions can't read it
+  };
+
+  // The colors in Chromium's Customize panel, which profiles use too: a seed color and a variant
+  // (chrome/browser/ui/webui/cr_components/theme_color_picker/customize_chrome_colors.cc).
+  // "neutral" variants are greyer versions of the same seed; Default is plain grey.
+  const themeColors = {
+    default: { name: 'Default', seed: '#888888', tint: 'none' },
+    blue: { name: 'Blue', seed: '#8cabe4', tint: 'tonal' },
+    coolGrey: { name: 'Cool grey', seed: '#8cabe4', tint: 'neutral' },
+    grey: { name: 'Grey', seed: '#888888', tint: 'none' }, // no hue to tint with
+    aqua: { name: 'Aqua', seed: '#26a69a', tint: 'tonal' },
+    green: { name: 'Green', seed: '#00ff00', tint: 'tonal' },
+    viridian: { name: 'Viridian', seed: '#87ba81', tint: 'neutral' },
+    citron: { name: 'Citron', seed: '#fadf73', tint: 'tonal' },
+    orange: { name: 'Orange', seed: '#ff8000', tint: 'tonal' },
+    apricot: { name: 'Apricot', seed: '#fcdbc9', tint: 'neutral' },
+    rose: { name: 'Rose', seed: '#f3b2be', tint: 'tonal' },
+    pink: { name: 'Pink', seed: '#f3b2be', tint: 'neutral' },
+    fuchsia: { name: 'Fuchsia', seed: '#ff00ff', tint: 'tonal' },
+    violet: { name: 'Violet', seed: '#e5d5fc', tint: 'tonal' }
+  };
+  // Like Chromium, every color gets the same amount of tint however vivid its seed is (OKLCH chroma).
+  // Checked against Helium: Blue gives a #1a202f toolbar, Aqua a #092421 profile color.
+  const tints = { tonal: { dark: 0.032, light: 0.018 }, neutral: { dark: 0.012, light: 0.006 }, none: { dark: 0, light: 0 } };
+
+  // v2.9–v3.0 stored a hex seed; map it to the matching color.
+  const themeColorKey = (s) => themeColors[s.themeColor] ? s.themeColor
+    : Object.keys(themeColors).find((k) => themeColors[k].tint === 'tonal' && themeColors[k].seed === s.themeColor) || defaults.themeColor;
+  const themeColor = (s) => {
+    const c = themeColors[themeColorKey(s)];
+    return { ...c, ...tints[c.tint] };
   };
 
   // Each accent as [light, dark].
@@ -71,5 +102,5 @@ var FEATHER = globalThis.FEATHER || (() => {
   // Which background feather's pages use. Before this setting existed, choosing a wallpaper was enough.
   const pageBackground = (s, hasWallpaper) => s.pageBg || (hasWallpaper ? 'wallpaper' : 'theme');
 
-  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight, getWallpaper, setWallpaper, pageBackground };
+  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight, getWallpaper, setWallpaper, pageBackground, themeColors, themeColorKey, themeColor };
 })();

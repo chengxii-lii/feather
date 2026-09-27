@@ -32,6 +32,7 @@ function paint() {
   // Pages: show the options for the chosen background only.
   $('#theme-row').hidden = s.pageBg !== 'theme';
   $('#wp-row').hidden = $('#wp-note').hidden = s.pageBg !== 'wallpaper';
+  $('#theme-name').textContent = FEATHER.themeColor(s).name;
 
   $('#width-out').textContent = `${s.width} px`;
   $('#rows-out').textContent = `${s.rows} results`;
@@ -71,6 +72,22 @@ function buildAccents() {
     const input = document.createElement('input');
     Object.assign(input, { type: 'radio', name: 'accent', value: name });
     input.setAttribute('aria-label', label.title);
+    label.append(input);
+    return label;
+  }));
+}
+
+// Chromium's Customize colors. Each swatch shows its color the way Chromium's picker does: a mid tone,
+// greyer for the neutral variants.
+function buildThemeColors() {
+  const chroma = { tonal: 0.1, neutral: 0.035, none: 0 };
+  $('#theme-colors').replaceChildren(...Object.entries(FEATHER.themeColors).map(([key, c]) => {
+    const label = document.createElement('label');
+    label.title = c.name;
+    const input = document.createElement('input');
+    Object.assign(input, { type: 'radio', name: 'themeColor', value: key });
+    input.setAttribute('aria-label', c.name);
+    input.style.setProperty('--c', `oklch(from ${c.seed} .72 ${chroma[c.tint]} h)`);
     label.append(input);
     return label;
   }));
@@ -256,8 +273,10 @@ function resetClick() {
 (async () => {
   $('#ver').textContent = 'v' + chrome.runtime.getManifest().version;
   buildAccents();
+  buildThemeColors();
   s = await FEATHER.load();
   s.bangs = [...s.bangs];
+  s.themeColor = FEATHER.themeColorKey(s); // an older hex value maps to its named color
   s.pageBg = FEATHER.pageBackground(s, !!(await FEATHER.getWallpaper())); // show which one is in effect
   fill();
   paint();

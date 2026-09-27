@@ -1,15 +1,14 @@
 /* feather's own pages (new tab and empty page). backdrop.js sets data-bg (theme | paper | wallpaper), the
-   theme's seed color (--seed) and the dark class. */
+   theme color's seed (--seed) and tint (--tint-dark, --tint-light), and the dark class. */
 html, body { margin: 0; height: 100%; overflow: hidden; }
 
 /* For the moment before settings load: the browser's own light or dark page color, so nothing flashes. */
 html:not([data-bg]) { color-scheme: light dark; background: Canvas; }
 
-/* Theme color: the browser toolbar's color, rebuilt from the theme's seed color (Chromium's new tab page
-   matches its toolbar). Same hue; about a third of the seed's color strength in dark mode, a hint of it
-   in light mode. Checked against Helium: seed #8cabe4 gives a #1a202f toolbar, and seed #26a69a a #092421 profile color. */
-html[data-bg="theme"], html[data-bg="theme"] body { background: oklch(from var(--seed) .965 calc(c * .18) h); }
-html.dark[data-bg="theme"], html.dark[data-bg="theme"] body { background: oklch(from var(--seed) .245 calc(c * .33) h); }
+/* Theme color: the browser toolbar's color, rebuilt from the theme color (Chromium's new tab page matches
+   its toolbar): the seed's hue with a fixed tint, very dark in dark mode and very light in light mode. */
+html[data-bg="theme"], html[data-bg="theme"] body { background: oklch(from var(--seed) .965 var(--tint-light) h); }
+html.dark[data-bg="theme"], html.dark[data-bg="theme"] body { background: oklch(from var(--seed) .245 var(--tint-dark) h); }
 
 /* Paper: feather's warm look. */
 html[data-bg="paper"], html[data-bg="paper"] body, html[data-bg="wallpaper"], html[data-bg="wallpaper"] body { background: #faf9f5; }
@@ -25,8 +24,8 @@ html.dark[data-bg="paper"], html.dark[data-bg="paper"] body, html.dark[data-bg="
   animation: fade .5s cubic-bezier(.23, 1, .32, 1) both;
 }
 html.dark .rest p { color: #a6a39a; }
-html[data-bg="theme"] .rest p { color: oklch(from var(--seed) .5 calc(c * .3) h); }
-html.dark[data-bg="theme"] .rest p { color: oklch(from var(--seed) .74 calc(c * .3) h); }
+html[data-bg="theme"] .rest p { color: oklch(from var(--seed) .5 var(--tint-dark) h); }
+html.dark[data-bg="theme"] .rest p { color: oklch(from var(--seed) .74 var(--tint-dark) h); }
 html.has-wallpaper .rest p { color: rgba(255, 255, 255, .92); text-shadow: 0 1px 16px rgba(0, 0, 0, .35); }
 
 .rest kbd {
@@ -36,8 +35,8 @@ html.has-wallpaper .rest p { color: rgba(255, 255, 255, .92); text-shadow: 0 1px
 }
 html.dark .rest kbd { background: #30302e; color: #faf9f5; box-shadow: 0 0 0 1px rgba(222, 220, 209, .14); }
 html.dark[data-bg="theme"] .rest kbd {
-  background: oklch(from var(--seed) .3 calc(c * .33) h); color: oklch(from var(--seed) .95 calc(c * .1) h);
-  box-shadow: 0 0 0 1px oklch(from var(--seed) .5 calc(c * .33) h / .5);
+  background: oklch(from var(--seed) .3 var(--tint-dark) h); color: oklch(from var(--seed) .95 var(--tint-light) h);
+  box-shadow: 0 0 0 1px oklch(from var(--seed) .5 var(--tint-dark) h / .5);
 }
 
 @keyframes fade { from { opacity: 0; } }
