@@ -17,7 +17,7 @@ var FEATHER = globalThis.FEATHER || (() => {
     bangs: [],             // [{ key: 'mdn', url: 'https://developer.mozilla.org/search?q=%s' }]
     pinnedUnload: true,    // "Close tab" (Ctrl+W) unloads pinned tabs instead of closing them
     pageBg: null,          // feather's pages: theme | paper | wallpaper (null: wallpaper if one is chosen, else theme)
-    themeColor: '#8cabe4'  // the browser theme's seed color; Chromium doesn't let extensions read it
+    themeColor: '#26a69a'  // the browser theme's (profile) seed color; Chromium doesn't let extensions read it
   };
 
   // Each accent as [light, dark].

@@ -7,7 +7,7 @@ html:not([data-bg]) { color-scheme: light dark; background: Canvas; }
 
 /* Theme color: the browser toolbar's color, rebuilt from the theme's seed color (Chromium's new tab page
    matches its toolbar). Same hue; about a third of the seed's color strength in dark mode, a hint of it
-   in light mode. Checked against Helium's dark toolbar: #1a202f from seed #8cabe4. */
+   in light mode. Checked against Helium: seed #8cabe4 gives a #1a202f toolbar, and seed #26a69a a #092421 profile color. */
 html[data-bg="theme"], html[data-bg="theme"] body { background: oklch(from var(--seed) .965 calc(c * .18) h); }
 html.dark[data-bg="theme"], html.dark[data-bg="theme"] body { background: oklch(from var(--seed) .245 calc(c * .33) h); }
 
