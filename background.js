@@ -45,11 +45,15 @@ async function closeTab(tab) {
   tab ??= (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
   // Ctrl+W does nothing on feather's empty page: it's where you rest after closing everything.
   if (!tab || tab.url?.startsWith(EMPTY)) return;
-  const s = await FEATHER.load();
-  if (!s.pinnedUnload) return chrome.tabs.remove(tab.id);
 
   const others = (await chrome.tabs.query({ windowId: tab.windowId })).filter((t) => t.id !== tab.id);
   const awake = others.filter((t) => !(t.pinned && t.discarded));
+  // A blank new tab that's all that's left awake (like the one the browser starts on) is that same resting
+  // page, so Ctrl+W leaves it alone too.
+  if (tab.url?.startsWith(NEWTAB) && !awake.length) return;
+
+  const s = await FEATHER.load();
+  if (!s.pinnedUnload) return chrome.tabs.remove(tab.id);
 
   if (!tab.pinned) {
     // Closing your last tab lands on feather's empty page, instead of closing the window or waking an
