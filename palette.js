@@ -327,11 +327,13 @@
 
   if (ON_PAGE) {
     // Ctrl+T or the toolbar icon toggles the bar on feather's own pages.
-    chrome.tabs.getCurrent().then((tab) => {
+    chrome.tabs.getCurrent().then(async (tab) => {
       origin = { tabId: tab.id, windowId: tab.windowId };
       chrome.runtime.onMessage.addListener((m) => { if (m.type === 'toggle' && m.tabId === tab.id) window.__feather.toggle(); });
-      if (ON_EMPTY) {
-        // The empty page (after closing your last tab) is ready for the bar before any key is pressed.
+      // The empty page (after closing your last tab), and a new tab that's alone in its window (the browser
+      // or a new window starting up), rest on "Press Ctrl T to search" until you ask for the bar.
+      const alone = ON_NEWTAB && (await chrome.tabs.query({ windowId: tab.windowId })).length === 1;
+      if (ON_EMPTY || alone) {
         applySettings(settings);
         FEATHER.load().then(applySettings);
         return;

@@ -1,4 +1,4 @@
-// feather's empty page: one line saying how to search, with your real shortcut.
+// feather's empty page and new tab page: one line saying how to search, with your real shortcut.
 (async () => {
   const line = document.createElement('p');
   const rest = document.createElement('div');
