@@ -29,6 +29,10 @@ function paint() {
   $('#p-enter').textContent = here ? 'open here' : 'open';
   $('#p-alt').textContent = here ? 'new tab' : 'open here';
 
+  // Pages: show the options for the chosen background only.
+  $('#theme-row').hidden = s.pageBg !== 'theme';
+  $('#wp-row').hidden = $('#wp-note').hidden = s.pageBg !== 'wallpaper';
+
   $('#width-out').textContent = `${s.width} px`;
   $('#rows-out').textContent = `${s.rows} results`;
   fitPreview();
@@ -76,7 +80,7 @@ function fill() {
   for (const el of document.querySelectorAll('[name]')) {
     if (el.type === 'radio') el.checked = s[el.name] === el.value;
     else if (el.type === 'checkbox') el.checked = !!s[el.name];
-    else if (el.type === 'range') el.value = s[el.name];
+    else if (el.type === 'range' || el.type === 'color') el.value = s[el.name];
   }
   renderBangs();
 }
@@ -208,7 +212,8 @@ async function useWallpaper(file) {
   canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   await FEATHER.setWallpaper(canvas.toDataURL('image/jpeg', 0.9));
   await showWallpaper();
-  saved();
+  await set({ pageBg: 'wallpaper' }); // choosing a wallpaper means you want to see it
+  fill();
 }
 
 function wireWallpaper() {
@@ -239,6 +244,7 @@ function resetClick() {
   armed = 0;
   btn.textContent = 'Reset to defaults';
   s = structuredClone(FEATHER.defaults);
+  s.pageBg = FEATHER.pageBackground(s, false);
   Promise.all([chrome.storage.sync.clear(), FEATHER.setWallpaper('')]).then(saved);
   showWallpaper();
   fill();
@@ -252,6 +258,7 @@ function resetClick() {
   buildAccents();
   s = await FEATHER.load();
   s.bangs = [...s.bangs];
+  s.pageBg = FEATHER.pageBackground(s, !!(await FEATHER.getWallpaper())); // show which one is in effect
   fill();
   paint();
   wire();

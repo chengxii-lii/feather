@@ -134,6 +134,14 @@
   .btn.quiet:hover { color: var(--ink); background: var(--well); }
   .btn.danger { color: var(--warn); }
 
+  .row[hidden], .note[hidden] { display: none; }
+
+  /* Theme color picker: a rounded swatch */
+  .color-in { width: 44px; height: 30px; padding: 0; border: 0; border-radius: 8px; background: none; cursor: pointer; flex: none; }
+  .color-in::-webkit-color-swatch-wrapper { padding: 0; }
+  .color-in::-webkit-color-swatch { border: 0; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--hairline); }
+  .color-in:focus-visible { outline: 2px solid var(--quill); outline-offset: 2px; }
+
   /* Wallpaper thumbnail: screen-shaped, with a hairline edge */
   .thumb { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; outline: 1px solid rgba(0, 0, 0, .1); outline-offset: -1px; flex: none; }
   html[data-theme="dark"] .thumb { outline-color: rgba(255, 255, 255, .1); }
@@ -307,6 +315,18 @@
     <h3>Background</h3>
     <div class="card">
       <div class="row">
+        <div class="label"><div class="name" id="l-pagebg">Background</div><div class="hint">Light and dark follow your browser.</div></div>
+        <fieldset class="seg" aria-labelledby="l-pagebg">
+          <label><input type="radio" name="pageBg" value="theme"><span>Theme color</span></label>
+          <label><input type="radio" name="pageBg" value="paper"><span>Paper</span></label>
+          <label><input type="radio" name="pageBg" value="wallpaper"><span>Wallpaper</span></label>
+        </fieldset>
+      </div>
+      <div class="row" id="theme-row">
+        <div class="label"><div class="name"><label for="themeColor">Theme color</label></div><div class="hint">The color you picked in your browser's Customize menu. Chromium doesn't let extensions read it, so set it here too.</div></div>
+        <input type="color" class="color-in" id="themeColor" name="themeColor">
+      </div>
+      <div class="row" id="wp-row">
         <div class="label"><div class="name">Wallpaper</div><div class="hint" id="wp-hint">Choose your desktop wallpaper and feather lines it up with your screen, so its pages look see-through.</div></div>
         <img class="thumb" id="wp-thumb" alt="Your wallpaper" hidden>
         <button class="btn quiet danger" id="wp-remove" type="button" hidden>Remove</button>
@@ -314,7 +334,7 @@
         <input type="file" id="wp-file" accept="image/*" hidden>
       </div>
     </div>
-    <p class="note">A browser page can't be truly transparent, so this shows a copy of your wallpaper. If you change your wallpaper, choose it here again. Animated wallpapers show as a still image.</p>
+    <p class="note" id="wp-note">A browser page can't be truly transparent, so this shows a copy of your wallpaper. If you change your wallpaper, choose it here again. Animated wallpapers show as a still image.</p>
   </section>
 
   <h2 class="feature">Shortcuts</h2>

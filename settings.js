@@ -15,7 +15,9 @@ var FEATHER = globalThis.FEATHER || (() => {
     bookmarks: true,
     history: true,
     bangs: [],             // [{ key: 'mdn', url: 'https://developer.mozilla.org/search?q=%s' }]
-    pinnedUnload: true     // "Close tab" (Ctrl+W) unloads pinned tabs instead of closing them
+    pinnedUnload: true,    // "Close tab" (Ctrl+W) unloads pinned tabs instead of closing them
+    pageBg: null,          // feather's pages: theme | paper | wallpaper (null: wallpaper if one is chosen, else theme)
+    themeColor: '#8cabe4'  // the browser theme's seed color; Chromium doesn't let extensions read it
   };
 
   // Each accent as [light, dark].
@@ -66,5 +68,8 @@ var FEATHER = globalThis.FEATHER || (() => {
   const getWallpaper = async () => (await chrome.storage.local.get('wallpaper')).wallpaper || '';
   const setWallpaper = (dataUrl) => (dataUrl ? chrome.storage.local.set({ wallpaper: dataUrl }) : chrome.storage.local.remove('wallpaper'));
 
-  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight, getWallpaper, setWallpaper };
+  // Which background feather's pages use. Before this setting existed, choosing a wallpaper was enough.
+  const pageBackground = (s, hasWallpaper) => s.pageBg || (hasWallpaper ? 'wallpaper' : 'theme');
+
+  return { defaults, accents, load, save, isDark, vars, listHeight, barHeight, getWallpaper, setWallpaper, pageBackground };
 })();

@@ -1,7 +1,20 @@
-/* feather's own pages (new tab and empty page): warm paper, or your wallpaper when you've chosen one.
-   The theme class on <html> comes from palette.js. */
-html, body { margin: 0; height: 100%; overflow: hidden; background: #faf9f5; }
-html.dark, html.dark body { background: #262624; }
+/* feather's own pages (new tab and empty page). backdrop.js sets data-bg (theme | paper | wallpaper), the
+   theme's seed color (--seed) and the dark class. */
+html, body { margin: 0; height: 100%; overflow: hidden; }
+
+/* For the moment before settings load: the browser's own light or dark page color, so nothing flashes. */
+html:not([data-bg]) { color-scheme: light dark; background: Canvas; }
+
+/* Theme color: the browser toolbar's color, rebuilt from the theme's seed color (Chromium's new tab page
+   matches its toolbar). Same hue; about a third of the seed's color strength in dark mode, a hint of it
+   in light mode. Checked against Helium's dark toolbar: #1a202f from seed #8cabe4. */
+html[data-bg="theme"], html[data-bg="theme"] body { background: oklch(from var(--seed) .965 calc(c * .18) h); }
+html.dark[data-bg="theme"], html.dark[data-bg="theme"] body { background: oklch(from var(--seed) .245 calc(c * .33) h); }
+
+/* Paper: feather's warm look. */
+html[data-bg="paper"], html[data-bg="paper"] body, html[data-bg="wallpaper"], html[data-bg="wallpaper"] body { background: #faf9f5; }
+html.dark[data-bg="paper"], html.dark[data-bg="paper"] body, html.dark[data-bg="wallpaper"], html.dark[data-bg="wallpaper"] body { background: #262624; }
+
 .wallpaper { position: fixed; left: 0; top: 0; background-size: cover; background-position: center; pointer-events: none; }
 
 /* Empty page: one quiet line. */
@@ -12,12 +25,20 @@ html.dark, html.dark body { background: #262624; }
   animation: fade .5s cubic-bezier(.23, 1, .32, 1) both;
 }
 html.dark .rest p { color: #a6a39a; }
+html[data-bg="theme"] .rest p { color: oklch(from var(--seed) .5 calc(c * .3) h); }
+html.dark[data-bg="theme"] .rest p { color: oklch(from var(--seed) .74 calc(c * .3) h); }
 html.has-wallpaper .rest p { color: rgba(255, 255, 255, .92); text-shadow: 0 1px 16px rgba(0, 0, 0, .35); }
+
 .rest kbd {
   font: 500 13px/1 "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; min-width: 26px; text-align: center;
   padding: 6px 8px; border-radius: 7px; background: #fff; color: #141413; text-shadow: none;
   box-shadow: 0 0 0 1px rgba(31, 30, 29, .13), 0 1px 2px rgba(31, 30, 29, .06);
 }
 html.dark .rest kbd { background: #30302e; color: #faf9f5; box-shadow: 0 0 0 1px rgba(222, 220, 209, .14); }
+html.dark[data-bg="theme"] .rest kbd {
+  background: oklch(from var(--seed) .3 calc(c * .33) h); color: oklch(from var(--seed) .95 calc(c * .1) h);
+  box-shadow: 0 0 0 1px oklch(from var(--seed) .5 calc(c * .33) h / .5);
+}
+
 @keyframes fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .rest p { animation: none; } }

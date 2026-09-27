@@ -1,11 +1,22 @@
-// feather's own pages (new tab and empty page) can show your desktop wallpaper, lined up with where the
-// window sits on screen, so the page looks see-through. A page can't make the browser window actually
-// transparent, so this is the closest thing.
+// The background of feather's own pages (new tab and empty page): your browser theme's color, warm paper,
+// or your desktop wallpaper.
 (async () => {
-  const image = await FEATHER.getWallpaper();
-  if (!image) return;
+  const root = document.documentElement;
+  const [s, image] = await Promise.all([FEATHER.load(), FEATHER.getWallpaper()]);
+  const bg = FEATHER.pageBackground(s, !!image);
+  root.dataset.bg = bg;
+  root.style.setProperty('--seed', s.themeColor); // pages.css builds light and dark shades from it
 
-  document.documentElement.classList.add('has-wallpaper');
+  // Follow light and dark mode as they change, like the browser does.
+  const mode = matchMedia('(prefers-color-scheme: dark)');
+  const applyMode = () => root.classList.toggle('dark', FEATHER.isDark(s));
+  applyMode();
+  mode.addEventListener('change', applyMode);
+
+  // The wallpaper is lined up with where the window sits on screen, so the page looks see-through.
+  // A page can't make the browser window actually transparent, so this is the closest thing.
+  if (bg !== 'wallpaper' || !image) return;
+  root.classList.add('has-wallpaper');
   const layer = document.createElement('div');
   layer.className = 'wallpaper';
   layer.style.backgroundImage = `url("${image}")`;
