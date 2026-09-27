@@ -104,6 +104,8 @@
   .switch:checked { background: var(--quill); box-shadow: none; }
   .switch:checked::before { transform: translateX(16px); }
   .switch:focus-visible { outline: 2px solid var(--quill); outline-offset: 2px; }
+  .switch:disabled { opacity: .4; cursor: default; }
+  .row.off .label { opacity: .5; } /* a setting that depends on one that's turned off */
 
   /* Glass slider */
   .range { display: flex; align-items: center; gap: 10px; flex: none; font-size: 12px; color: var(--ink-faint); }
@@ -297,6 +299,10 @@
       <div class="row">
         <div class="label"><div class="name"><label for="pinnedUnload">Closing a pinned tab unloads it</label></div><div class="hint">It stays pinned and reloads when you open it again. When every pinned tab is unloaded, you land on feather's empty page. Uses the Close tab shortcut below.</div></div>
         <input type="checkbox" role="switch" class="switch" id="pinnedUnload" name="pinnedUnload">
+      </div>
+      <div class="row" id="reset-row">
+        <div class="label"><div class="name"><label for="pinnedReset">Go back to the site's home page</label></div><div class="hint">An unloaded pinned tab reopens on the site's home page, like youtube.com instead of the video you were watching. Where you were stays in its Back history.</div></div>
+        <input type="checkbox" role="switch" class="switch" id="pinnedReset" name="pinnedReset">
       </div>
     </div>
   </section>
