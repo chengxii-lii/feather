@@ -62,36 +62,8 @@ async function closeTab(tab) {
   const next = awake.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
   if (next) await chrome.tabs.update(next.id, { active: true });
   else await chrome.tabs.create({ windowId: tab.windowId, url: EMPTY });
-
-  // Send it back to the site's home page first (youtube.com, not the video you were on), so that's where
-  // it opens next time. Where you were stays in its Back history.
-  const home = s.pinnedReset && homeOf(tab.url);
-  if (home) {
-    const arrived = loaded(tab.id, 4000); // listen first, so a fast page can't finish unnoticed
-    await chrome.tabs.update(tab.id, { url: home });
-    await arrived;
-  }
   // A tab can only be unloaded once it's in the background.
   await chrome.tabs.discard(tab.id).catch(() => {});
-}
-
-// A web page's home: its address with the path, query and fragment removed. Null if it's already there
-// or isn't a web page.
-function homeOf(url = '') {
-  let u;
-  try { u = new URL(url); } catch { return null; }
-  if (!/^https?:$/.test(u.protocol)) return null;
-  return u.pathname === '/' && !u.search && !u.hash ? null : `${u.origin}/`;
-}
-
-// Resolves when the tab finishes loading, or after `ms` at most.
-function loaded(tabId, ms) {
-  return new Promise((resolve) => {
-    const done = () => { clearTimeout(timer); chrome.tabs.onUpdated.removeListener(onUpdated); resolve(); };
-    const onUpdated = (id, info) => { if (id === tabId && info.status === 'complete') done(); };
-    const timer = setTimeout(done, ms);
-    chrome.tabs.onUpdated.addListener(onUpdated);
-  });
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {

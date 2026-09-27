@@ -22,10 +22,6 @@ function paint() {
   $('#p-complete').hidden = !s.autocomplete;
   $('#p-suggest').hidden = !s.suggestions;
   $('#p-tab').hidden = !s.tabs;
-
-  // Going back to the home page only happens when pinned tabs unload.
-  $('#pinnedReset').disabled = !s.pinnedUnload;
-  $('#reset-row').classList.toggle('off', !s.pinnedUnload);
   const first = document.querySelector('#bar li:not([hidden])');
   for (const li of document.querySelectorAll('#bar li')) li.classList.toggle('on', li === first);
   // The preview's selected row is a typed address when autocomplete is on, and those always open in a new tab.

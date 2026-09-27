@@ -45,7 +45,6 @@ Quality-of-life upgrades for [Helium](https://helium.computer), borrowing the be
 Like Zen: with **Close tab** set to Ctrl+W, closing a pinned tab only unloads it. It stays pinned in your tab strip, stops using memory, and reloads when you click it again.
 
 - feather takes you back to the tab you used last.
-- The pinned tab goes back to the site's home page before it unloads, so next time it opens on `youtube.com`, not the video you were watching. Where you were stays in its Back history. You can turn this off in settings.
 - When every pinned tab is unloaded and nothing else is open, you land on feather's empty page.
 - Normal tabs close as usual. Closing your last tab leaves the empty page instead of closing the window, and never wakes up an unloaded pinned tab. Ctrl+W does nothing on the empty page.
 
@@ -64,7 +63,7 @@ On a brand-new tab, Chromium keeps the typing cursor in the address bar. Click t
 Click the gear in the bar's corner, press **Ctrl+,** while the bar is open, press **Ctrl+Shift+,** anywhere, or right-click feather's toolbar icon and choose **Options**.
 
 - **Command bar:** a live preview, then theme, glass clarity, accent color, width (480–960 px), height (4–12 results), page dimming, what Enter does, autocomplete, suggestions, which of tabs, bookmarks and history to search, and your own bangs (like `!mdn` → `https://developer.mozilla.org/search?q=%s`)
-- **Tabs:** turn Zen-style pinned tabs on or off, and whether they go back to the site's home page
+- **Tabs:** turn Zen-style pinned tabs on or off
 - **Pages:** choose a wallpaper for feather's pages
 - **Shortcuts:** see every feather shortcut and change it
 
