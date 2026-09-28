@@ -74,7 +74,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const ctx = msg.origin || { tabId: sender.tab?.id, windowId: sender.tab?.windowId };
   const run = msg.type === 'search' ? search(msg.q, ctx)
     : msg.type === 'suggest' ? suggest(msg.q)
-    : msg.type === 'open' ? open(msg.item, msg.here, ctx)
+    : msg.type === 'open' ? open(msg.item, msg.here, ctx, msg.background)
     : msg.type === 'settings' ? chrome.runtime.openOptionsPage() : null;
   if (!run) return;
   run.then(reply, (e) => reply({ error: String(e) }));
@@ -286,8 +286,11 @@ async function search(raw, ctx) {
 
 // ---------- Actions ----------
 
-async function open(item, here, ctx) {
+// `background`: open in a new tab behind the current one and stay put (Ctrl+Enter). Open tabs are just
+// switched to, since opening a second copy of a tab isn't useful.
+async function open(item, here, ctx, background = false) {
   const origin = ctx.tabId ? await chrome.tabs.get(ctx.tabId).catch(() => null) : null;
+  if (background && item.kind !== 'tab') return openBehind(item, origin, ctx);
 
   if (item.kind === 'tab') {
     await chrome.tabs.update(item.id, { active: true });
@@ -312,5 +315,20 @@ async function open(item, here, ctx) {
   if (item.kind === 'search') await chrome.search.query({ text: item.title, tabId }); // uses your default engine, so !bangs work
   else await chrome.tabs.update(tabId, { url: item.url });
   await chrome.windows.update((await chrome.tabs.get(tabId)).windowId, { focused: true });
+  return { ok: true };
+}
+
+// Like Ctrl+clicking links: each background tab goes after the ones you already opened from this tab.
+async function openBehind(item, origin, ctx) {
+  let index;
+  if (origin) {
+    const fromHere = (await chrome.tabs.query({ windowId: origin.windowId })).filter((t) => t.openerTabId === origin.id);
+    index = Math.max(origin.index, ...fromHere.map((t) => t.index)) + 1;
+  }
+  const created = await chrome.tabs.create({
+    windowId: ctx.windowId, index, openerTabId: origin?.id, active: false,
+    url: item.kind === 'search' ? 'about:blank' : item.url
+  });
+  if (item.kind === 'search') await chrome.search.query({ text: item.title, tabId: created.id });
   return { ok: true };
 }

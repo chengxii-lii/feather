@@ -28,6 +28,7 @@ Quality-of-life upgrades for [Helium](https://helium.computer), borrowing the be
 | --- | --- |
 | Enter | Switch to the tab, or open the result in a new tab |
 | Alt/Option+Enter | Open in the current tab |
+| Ctrl/Cmd+Enter, Ctrl/Cmd+click or middle-click | Open in a new tab in the background and stay where you are |
 | Right arrow | Accept the autofill (for a page, this puts in its address) |
 | Tab/Shift+Tab, Up/Down or Ctrl+N/P | Move through the results |
 | Ctrl+, | Open settings |

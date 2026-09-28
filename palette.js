@@ -26,7 +26,7 @@
   /* The panel keeps one height whatever the results, so it sits dead center and never jumps. */
   .panel {
     width: min(var(--width), calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--edge);
-    border-radius: 20px; overflow: hidden;
+    border-radius: 20px; overflow: hidden; container-type: inline-size;
     backdrop-filter: blur(var(--blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3);
     box-shadow: 0 1px 0 var(--shine) inset, 0 24px 64px -16px rgba(20, 20, 19, .3), 0 4px 14px rgba(20, 20, 19, .06);
     animation: in .16s cubic-bezier(.2, .9, .3, 1);
@@ -67,6 +67,7 @@
   .foot { display: flex; align-items: center; gap: 16px; padding: 6px 10px 6px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
   .foot span { display: inline-flex; align-items: center; gap: 6px; }
   .foot b { font-weight: inherit; }
+  @container (max-width: 600px) { .foot .bg-hint { display: none; } } /* no room on a narrow bar */
   .gear {
     all: unset; margin-left: auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--muted); cursor: pointer;
   }
@@ -86,6 +87,7 @@
         <div class="foot">
           <span><kbd>Enter</kbd> <b class="enter-does">open</b></span>
           <span><kbd>${isMac ? '⌥' : 'Alt'} Enter</kbd> <b class="alt-does">open here</b></span>
+          <span class="bg-hint"><kbd>${isMac ? '⌘' : 'Ctrl'} Enter</kbd> background</span>
           <span><kbd>Esc</kbd> close</span>
           <button class="gear" title="Settings (${isMac ? '⌘,' : 'Ctrl+,'})" aria-label="feather settings">${ICON_GEAR}</button>
         </div>
@@ -164,7 +166,8 @@
       li.append(ico, text, tag);
       li.addEventListener('mousemove', () => { if (sel !== i) { sel = i; mark(); } });
       li.addEventListener('mousedown', (e) => e.preventDefault()); // keep focus in the input
-      li.addEventListener('click', (e) => choose(item, e.altKey));
+      li.addEventListener('click', (e) => choose(item, e.altKey, primaryKey(e)));
+      li.addEventListener('auxclick', (e) => { if (e.button === 1) choose(item, false, true); }); // middle-click
       return li;
     }));
     footerFor(items[sel]);
@@ -236,14 +239,16 @@
     shadow.querySelector('.alt-does').textContent = here ? 'new tab' : 'open here';
   }
 
-  async function choose(item, alt) {
+  // `background`: open it in a new tab behind this one and stay here (Ctrl+Enter, Ctrl+click, middle-click).
+  async function choose(item, alt, background = false) {
     if (!item) return;
     const here = alt !== hereByDefault(item);
     // The popup has to stay alive until the worker has the message.
-    if (IN_POPUP) return send({ type: 'open', item, here }).finally(() => window.close());
+    if (IN_POPUP) return send({ type: 'open', item, here, background }).finally(() => window.close());
     close();
-    await send({ type: 'open', item, here });
+    await send({ type: 'open', item, here, background });
   }
+  const primaryKey = (e) => (isMac ? e.metaKey : e.ctrlKey); // Ctrl, or Cmd on Mac
 
   function onKey(e) {
     // Tab and Shift+Tab move through the results too (and never leave the bar).
@@ -260,7 +265,7 @@
       // Typing fast, you can press Enter before the results for your last few letters arrive.
       // Wait for results that match what's in the box, then act on those.
       const ready = resultsFor === typed ? Promise.resolve() : query();
-      ready.then(() => choose(resultsFor === typed ? items[sel] : { kind: 'search', title: typed }, e.altKey));
+      ready.then(() => choose(resultsFor === typed ? items[sel] : { kind: 'search', title: typed }, e.altKey, primaryKey(e)));
     } else if ((isMac ? e.metaKey : e.ctrlKey) && e.key === ',') {
       // Ctrl+, (Cmd+, on Mac) opens settings, like most apps.
       e.preventDefault();
